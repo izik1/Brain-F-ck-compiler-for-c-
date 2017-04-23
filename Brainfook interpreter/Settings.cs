@@ -1,4 +1,6 @@
-﻿public static class Settings
+﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
+
+public static class Settings
 {
     public static bool EliminateRedundentCode { get; set; }
 

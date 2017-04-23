@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
+
+using System.Text;
 
 public static class RepeatedInputEliminator
 {

@@ -2,3 +2,4 @@ Brainfook interpreter/obj/
 Brainfook interpreter/bin/
 Brainfook interpreter/Brainfook interpreter.csproj.user
 Brainfook interpreter/Brainfook interpreter.ruleset
+Brainfook interpreter/GlobalSuppressions.cs

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -1,7 +1,9 @@
-﻿using System;
+﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
+
+using System;
 using System.IO;
 
-public static class Ui
+public static class UIHandler
 {
     public static void SubscribeEvents()
     {

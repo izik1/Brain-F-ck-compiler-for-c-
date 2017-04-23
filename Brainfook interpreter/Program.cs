@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
+
+using System;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
@@ -14,7 +16,7 @@ public static class Program
 
     private static void Main()
     {
-        Ui.SubscribeEvents();
+        UIHandler.SubscribeEvents();
         OnOpen();
         OnCompile();
 
