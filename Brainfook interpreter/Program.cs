@@ -20,7 +20,7 @@ public static class Program
         OnOpen();
         OnCompile();
 
-        Console.WriteLine((Compile() ? "Compiled!" : "Failed"));
+        Console.WriteLine((Compile() ? "Compiled!" : "Failed to compile"));
     }
 
     // I have no clue what to name this
