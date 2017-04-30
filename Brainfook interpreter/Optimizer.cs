@@ -15,7 +15,7 @@ public static class Optimizer
 
         if (Settings.EliminateRepeatedInput)
         {
-            code = RedundencyEliminator.Eliminate(codeIn);
+            code = RepeatedInputEliminator.Eliminate(codeIn);
         }
 
         return code;

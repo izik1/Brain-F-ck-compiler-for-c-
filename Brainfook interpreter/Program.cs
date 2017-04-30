@@ -63,7 +63,7 @@ public static class Program
         string code = codeIn + " ";
         StringBuilder inject = new StringBuilder();
         char prev = code[0];
-        int runLength = 0;
+        int runLength = 1; // The reason this is 1 instead of 0 is because runs are positive length.
         for (int i = 1; i < code.Length; i++)
         {
             if (prev == code[i] && ("+-><".IndexOf(code[i]) != -1))
@@ -105,6 +105,7 @@ public static class Program
         {
             return false;
         }
+
         WriteToFiles(code, compiled, results);
         return true;
     }
