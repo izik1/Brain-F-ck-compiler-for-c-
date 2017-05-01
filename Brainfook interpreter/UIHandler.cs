@@ -8,7 +8,8 @@ public static class UIHandler
     public static void SubscribeEvents()
     {
         Program.OnOpen += UserEliminatesRedundentCode;
-        Program.OnOpen += UserEliminatesRepeatedInput;
+        Program.OnOpen += UserEliminatesRepeatedFlatValues;
+        Program.OnOpen += UserSimplifiesToZeroLoops;
         Program.OnOpen += UserInputsFromFile;
         Program.OnCompile += GetUserCode;
     }
@@ -41,11 +42,18 @@ public static class UIHandler
         Settings.EliminateRedundentCode = GetYnInput();
     }
 
-    private static void UserEliminatesRepeatedInput()
+    private static void UserEliminatesRepeatedFlatValues()
     {
         Console.Clear();
-        Console.WriteLine("Eliminate repeated inputs (,,,,, turns into , because you aren't doing anything with it before changing it) y/n?");
-        Settings.EliminateRepeatedInput = GetYnInput();
+        Console.WriteLine("Eliminate Repeated flat values ex: ,, = , or [+], = , or ,[-] = [-] y/n?");
+        Settings.EliminateRepeatedFlatValues = GetYnInput();
+    }
+
+    private static void UserSimplifiesToZeroLoops()
+    {
+        Console.Clear();
+        Console.WriteLine("Simplify Loops that go to zero? ([+] or [-]) y/n?");
+        Settings.SimplifyToZeroLoops = GetYnInput();
     }
 
     private static void GetUserCode()

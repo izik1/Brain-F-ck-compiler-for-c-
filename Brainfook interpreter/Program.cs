@@ -21,6 +21,7 @@ public static class Program
         OnCompile();
 
         Console.WriteLine((Compile() ? "Compiled!" : "Failed to compile"));
+        Console.ReadKey();
     }
 
     // I have no clue what to name this
@@ -52,8 +53,9 @@ public static class Program
             case ']':
                 return "}";
 
+            case '0':
+                return "ram[ptr]=0;";
             default:
-                Console.WriteLine("Invalid char slipped past parsing.");
                 return "";
         }
     }
@@ -84,8 +86,12 @@ public static class Program
     private static bool Compile()
     {
         string code = Lexer.Lex(Settings.InputCode);
+        if (!ProgramValidator.PreOptimizeValidate(code))
+        {
+            return false;
+        }
         code = Optimizer.Optimize(code);
-        if (!ProgramValidator.Validate(code))
+        if (!ProgramValidator.PostOptimizeValidate(code))
         {
             return false;
         }

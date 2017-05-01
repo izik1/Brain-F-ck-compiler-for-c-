@@ -8,7 +8,19 @@ using System.Threading.Tasks;
 
 public static class ProgramValidator
 {
-    public static bool Validate(string code)
+    public static bool PreOptimizeValidate(string code)
+    {
+        if (!CodeSanitized(code))
+        {
+            Console.WriteLine("Some how the code wasn't santized when it was brought in, " +
+                "some hazmat suits (and some debugging on the projects end) is needed." +
+                " -- you should never see this please report this if you do.");
+            return false;
+        }
+        return PostOptimizeValidate(code);
+    }
+
+    public static bool PostOptimizeValidate(string code)
     {
         if (NullProgram(code))
         {
@@ -24,6 +36,18 @@ public static class ProgramValidator
         {
             Console.WriteLine("You have an infinite loop somewhere.");
             return false;
+        }
+        return true;
+    }
+
+    public static bool CodeSanitized(string code)
+    {
+        for (int i = 0; i < code.Length; i++)
+        {
+            if ("[+<,.>-]".IndexOf(code[i]) == -1)
+            {
+                return false;
+            }
         }
         return true;
     }
