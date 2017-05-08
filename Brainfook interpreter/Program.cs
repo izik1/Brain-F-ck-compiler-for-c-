@@ -78,7 +78,7 @@ public static class Program
     {
         List<Instruction> code = Lexer.Lex(Settings.InputCode);
         Optimizer.Optimize(code);
-        if (!ProgramValidator.PostOptimizeValidate(code))
+        if (!ProgramValidator.Validate(code))
         {
             return false;
         }

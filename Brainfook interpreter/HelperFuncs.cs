@@ -16,23 +16,23 @@ public static class HelperFuncs
 
     public static OpCode GetReversedCode(this OpCode code)
     {
-        if (code == OpCode.AddVal)
+        switch (code)
         {
-            return OpCode.SubVal;
+            case OpCode.AddVal:
+                return OpCode.SubVal;
+
+            case OpCode.SubVal:
+                return OpCode.AddVal;
+
+            case OpCode.AddPtr:
+                return OpCode.SubPtr;
+
+            case OpCode.SubPtr:
+                return OpCode.AddPtr;
+
+            default:
+                return OpCode.NoOp;
         }
-        if (code == OpCode.SubVal)
-        {
-            return OpCode.AddVal;
-        }
-        if (code == OpCode.AddPtr)
-        {
-            return OpCode.SubPtr;
-        }
-        if (code == OpCode.SubPtr)
-        {
-            return OpCode.AddPtr;
-        }
-        return OpCode.NoOp;
     }
 
     public static bool IsReversable(this OpCode code)

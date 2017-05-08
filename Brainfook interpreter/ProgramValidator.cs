@@ -3,12 +3,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 public static class ProgramValidator
 {
-    public static bool PostOptimizeValidate(List<Instruction> code)
+    public static bool Validate(List<Instruction> code)
     {
         if (NullProgram(code))
         {

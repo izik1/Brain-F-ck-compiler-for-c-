@@ -3,9 +3,8 @@ using System.Collections.Generic;
 
 public static class Optimizer
 {
-    public static void Optimize(List<Instruction> codeIn)
+    public static void Optimize(List<Instruction> code)
     {
-        List<Instruction> code = codeIn;
         if (Settings.SimplifyToZeroLoops)
         {
             SimplifyToZeroLoops(code);
