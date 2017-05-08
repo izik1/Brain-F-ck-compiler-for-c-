@@ -7,11 +7,17 @@ public static class UIHandler
 {
     public static void SubscribeEvents()
     {
-        Program.OnOpen += UserEliminatesRedundentCode;
-        Program.OnOpen += UserEliminatesRepeatedFlatValues;
-        Program.OnOpen += UserSimplifiesToZeroLoops;
-        Program.OnOpen += UserInputsFromFile;
+        Program.OnOpen += GetUserSettings;
         Program.OnCompile += GetUserCode;
+    }
+
+    public static void GetUserSettings()
+    {
+        Settings.EliminateRedundentCode = GetUserInput("Eliminate redundencies? (ex: ++- turns into + or ><< turns into <)");
+        Settings.EliminateRepeatedFlatValues = GetUserInput(
+            "Eliminate Repeated flat values? (ex: ,, = , or [+], = , or ,[-] = [-])");
+        Settings.SimplifyToZeroLoops = GetUserInput("Simplify Loops that go to zero? ([+] or [-])");
+        Settings.GetCodeFromFile = GetUserInput("Input from file?");
     }
 
     public static bool GetYnInput()
@@ -26,34 +32,11 @@ public static class UIHandler
         return (c == 'Y' || c == 'y');
     }
 
-    private static void UserInputsFromFile()
+    public static bool GetUserInput(string displayText)
     {
         Console.Clear();
-        Console.WriteLine("Input from file? y/n");
-
-        Settings.GetCodeFromFile = GetYnInput();
-    }
-
-    private static void UserEliminatesRedundentCode()
-    {
-        Console.Clear();
-        Console.WriteLine("Eliminate redundencies? e.x ++- turns into + or ><< turns into < y/n?");
-
-        Settings.EliminateRedundentCode = GetYnInput();
-    }
-
-    private static void UserEliminatesRepeatedFlatValues()
-    {
-        Console.Clear();
-        Console.WriteLine("Eliminate Repeated flat values ex: ,, = , or [+], = , or ,[-] = [-] y/n?");
-        Settings.EliminateRepeatedFlatValues = GetYnInput();
-    }
-
-    private static void UserSimplifiesToZeroLoops()
-    {
-        Console.Clear();
-        Console.WriteLine("Simplify Loops that go to zero? ([+] or [-]) y/n?");
-        Settings.SimplifyToZeroLoops = GetYnInput();
+        Console.WriteLine(displayText + " y/n?");
+        return GetYnInput();
     }
 
     private static void GetUserCode()
