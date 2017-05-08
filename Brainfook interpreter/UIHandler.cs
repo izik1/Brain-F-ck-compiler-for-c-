@@ -17,6 +17,8 @@ public static class UIHandler
         Settings.EliminateRepeatedFlatValues = GetUserInput(
             "Eliminate Repeated flat values? (ex: ,, = , or [+], = , or ,[-] = [-])");
         Settings.SimplifyToZeroLoops = GetUserInput("Simplify Loops that go to zero? ([+] or [-])");
+        Settings.MergeAssignThenModifyInstructions = GetUserInput(
+            "Merge assignment instructions with following add/sub instructions?");
         Settings.GetCodeFromFile = GetUserInput("Input from file?");
     }
 

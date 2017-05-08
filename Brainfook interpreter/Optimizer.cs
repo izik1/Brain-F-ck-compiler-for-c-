@@ -30,8 +30,10 @@ public static class Optimizer
                 EliminateRepeatedFlatValue(code);
             } while (code.Count < CodeLength);
         }
-
-        MergeAssignThenModifyInstructions(code);
+        if (Settings.MergeAssignThenModifyInstructions)
+        {
+            MergeAssignThenModifyInstructions(code);
+        }
     }
 
     // This name is stupidly long but at least it is descriptive, still coding at 2:55
