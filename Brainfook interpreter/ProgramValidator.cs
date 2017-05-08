@@ -8,19 +8,7 @@ using System.Threading.Tasks;
 
 public static class ProgramValidator
 {
-    public static bool PreOptimizeValidate(string code)
-    {
-        if (!CodeSanitized(code))
-        {
-            Console.WriteLine("Some how the code wasn't santized when it was brought in, " +
-                "some hazmat suits (and some debugging on the projects end) is needed." +
-                " -- you should never see this please report this if you do.");
-            return false;
-        }
-        return PostOptimizeValidate(code);
-    }
-
-    public static bool PostOptimizeValidate(string code)
+    public static bool PostOptimizeValidate(List<Instruction> code)
     {
         if (NullProgram(code))
         {
@@ -40,32 +28,20 @@ public static class ProgramValidator
         return true;
     }
 
-    public static bool CodeSanitized(string code)
+    public static bool LoopsBalanced(List<Instruction> code)
     {
-        for (int i = 0; i < code.Length; i++)
-        {
-            if ("[+<,.>-]".IndexOf(code[i]) == -1)
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static bool LoopsBalanced(string code)
-    {
-        if (code.Count(c => c == '[') != code.Count(c => c == ']'))
+        if (code.Count(c => c.OpCode == OpCode.StartLoop) != code.Count(c => c.OpCode == OpCode.EndLoop))
         {
             return false;
         }
         int counter = 0;
-        for (int i = 0; i < code.Length; i++)
+        for (int i = 0; i < code.Count; i++)
         {
-            if (code[i] == '[')
+            if (code[i].OpCode == OpCode.StartLoop)
             {
                 counter++;
             }
-            else if (code[i] == ']')
+            else if (code[i].OpCode == OpCode.EndLoop)
             {
                 counter--;
             }
@@ -81,22 +57,22 @@ public static class ProgramValidator
         return true;
     }
 
-    public static bool ValidLoops(string code)
+    public static bool ValidLoops(List<Instruction> code)
     {
-        char prev = ' ';
-        for (int i = 0; i < code.Length; i++)
+        OpCode prev = OpCode.NoOp;
+        for (int i = 0; i < code.Count; i++)
         {
-            if (code[i] == ']' && prev == '[')
+            if (code[i].OpCode == OpCode.StartLoop && prev == OpCode.EndLoop)
             {
                 return false;
             }
-            prev = code[i];
+            prev = code[i].OpCode;
         }
         return true;
     }
 
-    public static bool NullProgram(string code)
+    public static bool NullProgram(List<Instruction> code)
     {
-        return code.Length == 0;
+        return code.Count == 0;
     }
 }

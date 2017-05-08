@@ -56,7 +56,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="Optimization\Optimizer.cs" />
+    <Compile Include="HelperFuncs.cs" />
+    <Compile Include="Instruction.cs" />
+    <Compile Include="OpCodes.cs" />
+    <Compile Include="Optimizer.cs" />
     <Compile Include="ProgramValidator.cs" />
     <Compile Include="Lexer.cs" />
     <Compile Include="Program.cs" />

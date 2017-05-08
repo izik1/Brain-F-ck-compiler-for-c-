@@ -5,6 +5,7 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
 public static class Program
 {
@@ -25,72 +26,58 @@ public static class Program
     }
 
     // I have no clue what to name this
-    public static string GetTransformedString(char prev, int runLength)
+    public static string ConvertIlInstructionToString(Instruction instruction)
     {
-        switch (prev)
+        switch (instruction.OpCode)
         {
-            case '>':
-                return "ptr+=" + runLength + ';';
+            case OpCode.NoOp:
+                return "";
 
-            case '<':
-                return "ptr-=" + runLength + ';';
+            case OpCode.AddVal:
+                return $"ram[ptr]+={instruction.Value};";
 
-            case '+':
-                return "ram[ptr]+=" + runLength + ';';
+            case OpCode.SubVal:
+                return $"ram[ptr]-={instruction.Value};";
 
-            case '-':
-                return "ram[ptr]-=" + runLength + ';';
+            case OpCode.AddPtr:
+                return $"ptr+={instruction.Value};";
 
-            case ',':
+            case OpCode.SubPtr:
+                return $"ptr-={instruction.Value};";
+
+            case OpCode.GetInput:
                 return "ram[ptr]=byte.Parse(Console.ReadLine());";
 
-            case '.':
+            case OpCode.SetOutput:
                 return "Console.WriteLine(ram[ptr] + \" \" + (char)ram[ptr]);";
 
-            case '[':
+            case OpCode.StartLoop:
                 return "while(ram[ptr]>0){";
 
-            case ']':
+            case OpCode.EndLoop:
                 return "}";
 
-            case '0':
+            case OpCode.AssignVal:
                 return "ram[ptr]=0;";
             default:
-                return "";
+                throw new InvalidOperationException("Unexpected OpCode" + instruction.OpCode);
         }
     }
 
-    private static string GetInjectString(string codeIn)
+    private static string GetInjectString(List<Instruction> code)
     {
-        string code = codeIn + " ";
         StringBuilder inject = new StringBuilder();
-        char prev = code[0];
-        int runLength = 1; // The reason this is 1 instead of 0 is because runs are positive length.
-        for (int i = 1; i < code.Length; i++)
+        for (int i = 0; i < code.Count; i++)
         {
-            if (prev == code[i] && ("+-><".IndexOf(code[i]) != -1))
-            {
-                runLength++;
-            }
-            else
-            {
-                inject.Append(GetTransformedString(prev, runLength));
-                prev = code[i];
-
-                runLength = 1;
-            }
+            inject.Append(ConvertIlInstructionToString(code[i]));
         }
         return inject.ToString();
     }
 
     private static bool Compile()
     {
-        string code = Lexer.Lex(Settings.InputCode);
-        if (!ProgramValidator.PreOptimizeValidate(code))
-        {
-            return false;
-        }
-        code = Optimizer.Optimize(code);
+        List<Instruction> code = Lexer.Lex(Settings.InputCode);
+        Optimizer.Optimize(code);
         if (!ProgramValidator.PostOptimizeValidate(code))
         {
             return false;
@@ -112,7 +99,7 @@ public static class Program
             return false;
         }
 
-        WriteToFiles(code, compiled, results);
+        WriteToFiles(string.Join("\n", code), compiled, results);
         return true;
     }
 
@@ -122,7 +109,7 @@ public static class Program
         {
             File.WriteAllText(appdir + "input-code.txt", Settings.InputCode);
         }
-        File.WriteAllText(appdir + "optimized-code.txt", code);
+        File.WriteAllText(appdir + "IL.txt", code);
         File.WriteAllBytes(appdir + "output.exe", File.ReadAllBytes(results.PathToAssembly));
         File.WriteAllText(appdir + "output-src.cs", compiled);
     }

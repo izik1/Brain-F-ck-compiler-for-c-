@@ -1,129 +1,90 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
-using System.Text;
+using System.Collections.Generic;
 
 public static class Optimizer
 {
-    public static string Optimize(string codeIn)
+    public static void Optimize(List<Instruction> codeIn)
     {
-        string code = codeIn;
+        List<Instruction> code = codeIn;
         if (Settings.SimplifyToZeroLoops)
         {
-            code = SimplifyToZeroLoops(code);
+            SimplifyToZeroLoops(code);
         }
-        int len = 0;
+        int CodeLength = 0;
         do
         {
-            len = code.Length;
+            CodeLength = code.Count;
             if (Settings.EliminateRedundentCode)
             {
-                code = EliminateRedundency(code);
+                EliminateRedundency(code);
             }
             if (Settings.EliminateRepeatedFlatValues)
             {
-                code = EliminateRepeatedFlatValue(code);
+                EliminateRepeatedFlatValue(code);
             }
-            code = code.TrimStart('0');
-        } while (code.Length < len);
-
-        return code;
+        } while (code.Count < CodeLength);
     }
 
-    private static char prev = ' ';
-
-    private static string EliminateRedundency(string CodeIn)
+    private static void EliminateRedundency(List<Instruction> code)
     {
-        if (CodeIn.Length == 0)
+        for (int i = code.Count - 2; i >= 0; i--)
         {
-            return "";
-        }
-        prev = CodeIn[0];
-        int runLength = 1;
-        StringBuilder output = new StringBuilder();
-        string code = CodeIn + " ";
-        for (int i = 1; i < code.Length; i++)
-        {
-            if (prev == code[i] && ("+-><".IndexOf(prev) != -1))
+            if (code[i + 1].OpCode == code[i].OpCode && code[i].OpCode.IsReversable())
             {
-                runLength++;
+                code[i].Value += code[i + 1].Value;
+                code[i + 1].Invalidate();
             }
-            else
+            else if (code[i + 1].OpCode == code[i].OpCode.GetReversedCode() && code[i].OpCode.IsReversable())
             {
-                switch (prev)
+                if (code[i + 1].Value > code[i].Value)
                 {
-                    case '<':
-                        runLength = GetRunString('<', '>', code[i], runLength, output);
-                        break;
-
-                    case '>':
-                        runLength = GetRunString('>', '<', code[i], runLength, output);
-                        break;
-
-                    case '+':
-                        runLength = GetRunString('+', '-', code[i], runLength, output);
-                        break;
-
-                    case '-':
-                        runLength = GetRunString('-', '+', code[i], runLength, output);
-                        break;
-
-                    case ' ':
-                        prev = code[i];
-                        break;
-
-                    default:
-                        output.Append(code[i - 1]);
-                        prev = code[i];
-                        break;
+                    code[i + 1].Value -= code[i].Value;
+                    code[i].Invalidate();
+                }
+                else if (code[i + 1].Value < code[i].Value)
+                {
+                    code[i].Value -= code[i + 1].Value;
+                    code[i + 1].Invalidate();
+                }
+                else
+                {
+                    code[i].Invalidate();
+                    code[i + 1].Invalidate();
                 }
             }
-        }
-        return output.ToString();
-    }
-
-    private static string SimplifyToZeroLoops(string code)
-    {
-        return code.Replace("[+]", "0").Replace("[-]", "0");
-    }
-
-    private static string EliminateRepeatedFlatValue(string code)
-    {
-        if (code.Length == 0)
-        {
-            return "";
-        }
-        StringBuilder output = new StringBuilder();
-        for (int i = 0; i < code.Length - 1; i++)
-        {
-            if ("0,".IndexOf(code[i + 1]) == -1 || "+-0,".IndexOf(code[i]) == -1)
-            {
-                output.Append(code[i]);
-            }
-        }
-        output.Append(code[code.Length - 1]);
-        return output.ToString();
-    }
-
-    private static int GetRunString(char normal, char inverse, char active, int runLength, StringBuilder output)
-    {
-        int lOut = runLength;
-        if (active == inverse)
-        {
-            lOut--;
-        }
-        else
-        {
-            if (runLength > 0)
-            {
-                output.Append(normal, lOut);
-            }
             else
             {
-                output.Append(inverse, -lOut);
+                // Do nothing as this is a normal case but nothing needs to be done.
             }
-            lOut = 1;
-            prev = active;
         }
+        code.RemoveNoOps();
+    }
 
-        return lOut;
+    private static void SimplifyToZeroLoops(List<Instruction> code)
+    {
+        for (int i = code.Count - 3; i >= 0; i--)
+        {
+            if (code[i + 2].OpCode == OpCode.EndLoop &&
+                (code[i + 1].OpCode.ModifiesValue() && code[i + 1].Value == 1) &&
+                code[i].OpCode == OpCode.StartLoop)
+            {
+                code[i + 0] = new Instruction(OpCode.AssignVal, 0);
+                code[i + 1].Invalidate();
+                code[i + 2].Invalidate();
+            }
+        }
+        code.RemoveNoOps();
+    }
+
+    private static void EliminateRepeatedFlatValue(List<Instruction> code)
+    {
+        for (int i = code.Count - 2; i >= 0; i--)
+        {
+            if ((code[i + 1].OpCode.AssignsValue() && (code[i].OpCode.ModifiesValue() || code[i].OpCode.AssignsValue())))
+            {
+                code[i].Invalidate();
+            }
+        }
+        code.RemoveNoOps();
     }
 }
