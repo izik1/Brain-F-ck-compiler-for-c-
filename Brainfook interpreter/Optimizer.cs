@@ -5,14 +5,15 @@ public static class Optimizer
 {
     public static void Optimize(List<Instruction> code)
     {
-        if (Settings.SimplifyToZeroLoops)
-        {
-            SimplifyToZeroLoops(code);
-        }
         int CodeLength = 0;
         do
         {
             CodeLength = code.Count;
+            if (Settings.SimplifyToZeroLoops)
+            {
+                SimplifyToZeroLoops(code);
+            }
+
             if (Settings.EliminateRedundentCode)
             {
                 EliminateRedundency(code);
