@@ -9,20 +9,51 @@ public static class Optimizer
         do
         {
             CodeLength = code.Count;
-            if (Settings.SimplifyToZeroLoops)
-            {
-                SimplifyToZeroLoops(code);
-            }
-
             if (Settings.EliminateRedundentCode)
             {
                 EliminateRedundency(code);
             }
-            if (Settings.EliminateRepeatedFlatValues)
+
+            if (Settings.SimplifyToZeroLoops)
             {
-                EliminateRepeatedFlatValue(code);
+                SimplifyToZeroLoops(code);
             }
         } while (code.Count < CodeLength);
+
+        // Coding at 2:45, fairly certain this should be out of the other loop because it doesn't
+        // affect the other things.
+        if (Settings.EliminateRepeatedFlatValues)
+        {
+            do
+            {
+                CodeLength = code.Count;
+                EliminateRepeatedFlatValue(code);
+            } while (code.Count < CodeLength);
+        }
+
+        MergeAssignThenModifyInstructions(code);
+    }
+
+    // This name is stupidly long but at least it is descriptive, still coding at 2:55
+    private static void MergeAssignThenModifyInstructions(List<Instruction> code)
+    {
+        for (int i = code.Count - 2; i >= 0; i--)
+        {
+            if (code[i].OpCode == OpCode.AssignVal &&
+                (code[i + 1].OpCode == OpCode.AddVal || code[i + 1].OpCode == OpCode.SubVal))
+            {
+                if (code[i + 1].OpCode == OpCode.AddVal)
+                {
+                    code[i].Value += code[i + 1].Value;
+                }
+                else
+                {
+                    code[i].Value -= code[i + 1].Value;
+                }
+                code[i + 1].Invalidate();
+            }
+        }
+        code.RemoveNoOps();
     }
 
     private static void EliminateRedundency(List<Instruction> code)
