@@ -41,18 +41,22 @@ public static class Optimizer
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {
-            if (code[i].OpCode == OpCode.AssignVal &&
-                (code[i + 1].OpCode == OpCode.AddVal || code[i + 1].OpCode == OpCode.SubVal))
+            if (code[i].OpCode == OpCode.AssignVal)
             {
                 if (code[i + 1].OpCode == OpCode.AddVal)
                 {
                     code[i].Value += code[i + 1].Value;
+                    code[i + 1].Invalidate();
+                }
+                else if (code[i + 1].OpCode == OpCode.SubVal)
+                {
+                    code[i].Value -= code[i + 1].Value;
+                    code[i + 1].Invalidate();
                 }
                 else
                 {
-                    code[i].Value -= code[i + 1].Value;
+                    // Do nothing.
                 }
-                code[i + 1].Invalidate();
             }
         }
         code.RemoveNoOps();
