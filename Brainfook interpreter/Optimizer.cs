@@ -3,24 +3,27 @@ using System.Collections.Generic;
 
 public static class Optimizer
 {
-    public static void Optimize(List<Instruction> code)
+    private static List<Instruction> code;
+
+    public static void Optimize(List<Instruction> codeIn)
     {
+        code = codeIn;
         int CodeLength = 0;
         do
         {
             CodeLength = code.Count;
             if (Settings.EliminateRedundentCode)
             {
-                EliminateRedundency(code);
+                EliminateRedundency();
             }
 
             if (Settings.SimplifyToZeroLoops)
             {
-                SimplifyToZeroLoops(code);
+                SimplifyToZeroLoops();
             }
             if (Settings.EliminateEmptyLoops)
             {
-                EliminateEmptyLoops(code);
+                EliminateEmptyLoops();
             }
         } while (code.Count < CodeLength);
 
@@ -31,16 +34,16 @@ public static class Optimizer
             do
             {
                 CodeLength = code.Count;
-                EliminateDeadStores(code);
+                EliminateDeadStores();
             } while (code.Count < CodeLength);
         }
         if (Settings.MergeAssignThenModifyInstructions)
         {
-            MergeAssignThenModifyInstructions(code);
+            MergeAssignThenModifyInstructions();
         }
     }
 
-    private static void EliminateEmptyLoops(List<Instruction> code)
+    private static void EliminateEmptyLoops()
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {
@@ -54,7 +57,7 @@ public static class Optimizer
     }
 
     // This name is stupidly long but at least it is descriptive, still coding at 2:55
-    private static void MergeAssignThenModifyInstructions(List<Instruction> code)
+    private static void MergeAssignThenModifyInstructions()
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {
@@ -79,7 +82,7 @@ public static class Optimizer
         code.RemoveNoOps();
     }
 
-    private static void EliminateRedundency(List<Instruction> code)
+    private static void EliminateRedundency()
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {
@@ -114,7 +117,7 @@ public static class Optimizer
         code.RemoveNoOps();
     }
 
-    private static void SimplifyToZeroLoops(List<Instruction> code)
+    private static void SimplifyToZeroLoops()
     {
         for (int i = code.Count - 3; i >= 0; i--)
         {
@@ -130,7 +133,7 @@ public static class Optimizer
         code.RemoveNoOps();
     }
 
-    private static void EliminateDeadStores(List<Instruction> code)
+    private static void EliminateDeadStores()
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {
