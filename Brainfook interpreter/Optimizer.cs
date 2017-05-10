@@ -22,12 +22,12 @@ public static class Optimizer
 
         // Coding at 2:45, fairly certain this should be out of the other loop because it doesn't
         // affect the other things.
-        if (Settings.EliminateRepeatedFlatValues)
+        if (Settings.EliminateDeadStores)
         {
             do
             {
                 CodeLength = code.Count;
-                EliminateRepeatedFlatValue(code);
+                EliminateDeadStores(code);
             } while (code.Count < CodeLength);
         }
         if (Settings.MergeAssignThenModifyInstructions)
@@ -113,7 +113,7 @@ public static class Optimizer
         code.RemoveNoOps();
     }
 
-    private static void EliminateRepeatedFlatValue(List<Instruction> code)
+    private static void EliminateDeadStores(List<Instruction> code)
     {
         for (int i = code.Count - 2; i >= 0; i--)
         {

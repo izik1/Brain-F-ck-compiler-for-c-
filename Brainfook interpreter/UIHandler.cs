@@ -14,8 +14,9 @@ public static class UIHandler
     public static void GetUserSettings()
     {
         Settings.EliminateRedundentCode = GetUserInput("Eliminate redundencies? (ex: ++- turns into + or ><< turns into <)");
-        Settings.EliminateRepeatedFlatValues = GetUserInput(
-            "Eliminate Repeated flat values? (ex: ,, = , or [+], = , or ,[-] = [-])");
+        Settings.EliminateDeadStores = GetUserInput(
+            "Eliminate Repeated Dead Stores?" +
+            " (storing a value and then storing another value on top without ever using the first one)");
         Settings.SimplifyToZeroLoops = GetUserInput("Simplify Loops that go to zero? ([+] or [-])");
         Settings.MergeAssignThenModifyInstructions = GetUserInput(
             "Merge assignment instructions with following add/sub instructions?");
