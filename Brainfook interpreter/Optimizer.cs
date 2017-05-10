@@ -18,6 +18,10 @@ public static class Optimizer
             {
                 SimplifyToZeroLoops(code);
             }
+            if (Settings.EliminateEmptyLoops)
+            {
+                EliminateEmptyLoops(code);
+            }
         } while (code.Count < CodeLength);
 
         // Coding at 2:45, fairly certain this should be out of the other loop because it doesn't
@@ -34,6 +38,19 @@ public static class Optimizer
         {
             MergeAssignThenModifyInstructions(code);
         }
+    }
+
+    private static void EliminateEmptyLoops(List<Instruction> code)
+    {
+        for (int i = code.Count - 2; i >= 0; i--)
+        {
+            if (code[i + 1].OpCode == OpCode.EndLoop && code[i].OpCode == OpCode.StartLoop)
+            {
+                code[i + 1].Invalidate();
+                code[i].Invalidate();
+            }
+        }
+        code.RemoveNoOps();
     }
 
     // This name is stupidly long but at least it is descriptive, still coding at 2:55

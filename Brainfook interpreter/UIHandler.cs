@@ -20,6 +20,7 @@ public static class UIHandler
         Settings.SimplifyToZeroLoops = GetUserInput("Simplify Loops that go to zero? ([+] or [-])");
         Settings.MergeAssignThenModifyInstructions = GetUserInput(
             "Merge assignment instructions with following add/sub instructions?");
+        Settings.EliminateEmptyLoops = GetUserInput("Eliminate Empty loops?");
         Settings.GetCodeFromFile = GetUserInput("Input from file?");
     }
 

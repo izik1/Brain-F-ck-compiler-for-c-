@@ -12,5 +12,7 @@ public static class Settings
 
     public static bool MergeAssignThenModifyInstructions { get; set; }
 
+    public static bool EliminateEmptyLoops { get; set; }
+
     public static string InputCode { get; set; }
 }
