@@ -58,7 +58,7 @@ public static class Program
                 return "}";
 
             case OpCode.AssignVal:
-                return "ram[ptr]=0;";
+                return $"ram[ptr]={instruction.Value};";
             default:
                 throw new InvalidOperationException("Unexpected OpCode" + instruction.OpCode);
         }
