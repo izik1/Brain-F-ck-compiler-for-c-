@@ -95,7 +95,7 @@ namespace BrainFckCompilerCS
         {
             if (settings.FileNameUserCode != string.Empty)
             {
-                File.WriteAllText(Path.Combine(appdir, settings.InputCode + ".txt"), settings.InputCode);
+                File.WriteAllText(Path.Combine(appdir, settings.FileNameUserCode + ".txt"), settings.FileNameUserCode);
             }
             if (settings.FileNameIL != string.Empty)
             {
