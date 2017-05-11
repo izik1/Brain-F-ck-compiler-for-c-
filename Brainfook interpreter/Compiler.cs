@@ -7,95 +7,105 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
 
-public static class Compiler
+namespace BrainFckCompilerCS
 {
-    private static readonly string appdir = AppDomain.CurrentDomain.BaseDirectory;
-
-    public static string ConvertIlInstructionToString(Instruction instruction)
+    /// <summary>
+    /// </summary>
+    public static class Compiler
     {
-        switch (instruction.OpCode)
+        /// <summary>
+        /// Attempts to compile the code specified in <paramref name="settings"/> outputs code in output.exe
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns>The success of the compilation.</returns>
+        public static CompilerOutput Compile(CompilerSettings settings)
         {
-            case OpCode.NoOp:
-                return "";
+            Tuple<bool, string> ValidationState;
+            List<Instruction> IL = Lexer.Lex(settings.InputCode);
+            ValidationState = ProgramValidator.Validate(IL);
+            if (!ValidationState.Item1)
+            {
+                return new CompilerOutput(false, ValidationState.Item2 +
+                    " (pre optimization)"); // Invalid programs can't compile.
+            }
+            Optimizer.Optimize(IL, settings);
+            ValidationState = ProgramValidator.Validate(IL);
+            if (!ValidationState.Item1)
+            {
+                return new CompilerOutput(false, ValidationState.Item2 +
+                    " (post optimization)"); // Optimizations broke the code.
+            }
 
-            case OpCode.AddVal:
-                return $"ram[ptr]+={instruction.Value};";
+            // Why is this using a constant string? because a better way to do this hasn't been
+            // found. The reason why this isn't a $ string is because of the brackets.
+            string compiled =
+                "using System;public class Program{public static void Main(){byte[] ram=new byte[256];byte ptr=0;" +
+                GetInjectString(IL) +
+                "Console.ReadKey();}}";
+            CSharpCodeProvider provider = new CSharpCodeProvider();
+            CompilerParameters paramaters = new CompilerParameters
+            {
+                CompilerOptions = "/optimize", // This currently does nothing?
+                GenerateExecutable = true,
+                OutputAssembly = Path.Combine(
+                    appdir,
+                    (settings.FileNameOutputExe != string.Empty ? settings.FileNameOutputExe : "output") + ".exe")
+            };
 
-            case OpCode.SubVal:
-                return $"ram[ptr]-={instruction.Value};";
+            CompilerResults results = provider.CompileAssemblyFromSource(paramaters, compiled);
 
-            case OpCode.AddPtr:
-                return $"ptr+={instruction.Value};";
+            if (results.Errors.Count > 0)
+            {
+                // This *shouldn't* ever happen because all errors *should* be caught by the validator.
+                return new CompilerOutput(false, "Unexpected compilation fail.");
+            }
 
-            case OpCode.SubPtr:
-                return $"ptr-={instruction.Value};";
-
-            case OpCode.GetInput:
-                return "ram[ptr]=byte.Parse(Console.ReadLine());";
-
-            case OpCode.SetOutput:
-                return "Console.WriteLine(ram[ptr] + \" \" + (char)ram[ptr]);";
-
-            case OpCode.StartLoop:
-                return "while(ram[ptr]>0){";
-
-            case OpCode.EndLoop:
-                return "}";
-
-            case OpCode.AssignVal:
-                return $"ram[ptr]={instruction.Value};";
-            default:
-                throw new InvalidOperationException("Unexpected OpCode" + instruction.OpCode);
-        }
-    }
-
-    private static string GetInjectString(List<Instruction> code)
-    {
-        StringBuilder inject = new StringBuilder();
-        for (int i = 0; i < code.Count; i++)
-        {
-            inject.Append(ConvertIlInstructionToString(code[i]));
-        }
-        return inject.ToString();
-    }
-
-    public static bool Compile(string codeIn)
-    {
-        List<Instruction> code = Lexer.Lex(codeIn);
-        Optimizer.Optimize(code);
-        if (!ProgramValidator.Validate(code))
-        {
-            return false;
-        }
-        string compiled = "using System;public class Program{public static void Main(){byte[] ram=new byte[256];byte ptr=0;" +
-            GetInjectString(code) +
-            "Console.ReadKey();}}";
-        CSharpCodeProvider provider = new CSharpCodeProvider();
-        CompilerParameters paramaters = new CompilerParameters
-        {
-            CompilerOptions = "/optimize",
-            GenerateExecutable = true
-        };
-
-        CompilerResults results = provider.CompileAssemblyFromSource(paramaters, compiled);
-
-        if (results.Errors.Count > 0)
-        {
-            return false;
+            // create a string which contains all the IL on new lines & pass the other args.
+            WriteToFiles(string.Join("\n", IL), compiled, settings);
+            return new CompilerOutput(true, string.Empty); // Made it.
         }
 
-        WriteToFiles(string.Join("\n", code), compiled, results);
-        return true;
-    }
+        /// <summary>
+        /// A string representing the directory the application was started in.
+        /// </summary>
+        private static readonly string appdir = AppDomain.CurrentDomain.BaseDirectory;
 
-    private static void WriteToFiles(string code, string compiled, CompilerResults results)
-    {
-        if (!Settings.GetCodeFromFile)
+        /// <summary>
+        /// Creates a string that is <paramref name="IL"/> as CSharp code.
+        /// </summary>
+        /// <param name="IL">The code to transpile to CSharp</param>
+        /// <returns></returns>
+        private static string GetInjectString(List<Instruction> IL)
         {
-            File.WriteAllText(appdir + "input-code.txt", Settings.InputCode);
+            StringBuilder inject = new StringBuilder();
+            for (int i = 0; i < IL.Count; i++)
+            {
+                inject.Append(IL[i].ToString(true));
+            }
+            return inject.ToString();
         }
-        File.WriteAllText(appdir + "IL.txt", code);
-        File.WriteAllBytes(appdir + "output.exe", File.ReadAllBytes(results.PathToAssembly));
-        File.WriteAllText(appdir + "output-src.cs", compiled);
+
+        /// <summary>
+        /// Writes the compiled exe along with the input code (brainf*ck), CSharp source and IL to files.
+        /// </summary>
+        /// <param name="IL">The IL as a string. (gets written to IL.txt)</param>
+        /// <param name="outputSrc">The CSharp source code of the output. (gets written to output-src.cs)</param>
+        /// <param name="userCode">The code that the user wrote and entered. (gets written to input-code.txt)</param>
+        private static void WriteToFiles(string IL, string outputSrc, CompilerSettings settings)
+        {
+            if (settings.FileNameUserCode != string.Empty)
+            {
+                File.WriteAllText(Path.Combine(appdir, settings.InputCode + ".txt"), settings.InputCode);
+            }
+            if (settings.FileNameIL != string.Empty)
+            {
+                File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"), IL);
+            }
+
+            if (settings.FileNameCSharpSrc != string.Empty)
+            {
+                File.WriteAllText(Path.Combine(appdir, settings.FileNameCSharpSrc + ".cs"), outputSrc);
+            }
+        }
     }
 }

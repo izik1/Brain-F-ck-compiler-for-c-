@@ -4,73 +4,95 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public static class ProgramValidator
+namespace BrainFckCompilerCS
 {
-    public static bool Validate(List<Instruction> code)
+    /// <summary>
+    /// </summary>
+    internal static class ProgramValidator
     {
-        if (NullProgram(code))
+        /// <summary>
+        /// Ensures that <paramref name="IL"/> is valid program code.
+        /// </summary>
+        /// <param name="IL"></param>
+        /// <returns></returns>
+        internal static Tuple<bool, string> Validate(List<Instruction> IL)
         {
-            Console.WriteLine($"Null Program{(Settings.EliminateRedundentCode ? ", try turning off Redundency Elimination? " : "")}");
-            return false;
+            if (NullProgram(IL))
+            {
+                return new Tuple<bool, string>(false, "Null program");
+            }
+            if (!LoopsBalanced(IL))
+            {
+                return new Tuple<bool, string>(false, "Loops aren't balanced ( [[] ) or maybe loops are out of order ( ][ ) ");
+            }
+            if (!ValidLoops(IL))
+            {
+                return new Tuple<bool, string>(false, "You have an infinite loop somewhere.");
+            }
+            return new Tuple<bool, string>(true, "Valid program");
         }
-        if (!LoopsBalanced(code))
-        {
-            Console.WriteLine($"Loops aren't balanced ( [[] ) or maybe loops are out of order ( ][ ) ");
-            return false;
-        }
-        if (!ValidLoops(code))
-        {
-            Console.WriteLine("You have an infinite loop somewhere.");
-            return false;
-        }
-        return true;
-    }
 
-    public static bool LoopsBalanced(List<Instruction> code)
-    {
-        if (code.Count(c => c.OpCode == OpCode.StartLoop) != code.Count(c => c.OpCode == OpCode.EndLoop))
+        /// <summary>
+        /// Checks to see if <paramref name="IL"/> has balanced loops
+        /// </summary>
+        /// <param name="IL"></param>
+        /// <returns></returns>
+        private static bool LoopsBalanced(List<Instruction> IL)
         {
-            return false;
-        }
-        int counter = 0;
-        for (int i = 0; i < code.Count; i++)
-        {
-            if (code[i].OpCode == OpCode.StartLoop)
-            {
-                counter++;
-            }
-            else if (code[i].OpCode == OpCode.EndLoop)
-            {
-                counter--;
-            }
-            else
-            {
-                // Do nothing :/
-            }
-            if (counter < 0)
+            if (IL.Count(c => c.OpCode == OpCode.StartLoop) != IL.Count(c => c.OpCode == OpCode.EndLoop))
             {
                 return false;
             }
-        }
-        return true;
-    }
-
-    public static bool ValidLoops(List<Instruction> code)
-    {
-        OpCode prev = OpCode.NoOp;
-        for (int i = 0; i < code.Count; i++)
-        {
-            if (code[i].OpCode == OpCode.StartLoop && prev == OpCode.EndLoop)
+            int counter = 0;
+            for (int i = 0; i < IL.Count; i++)
             {
-                return false;
+                if (IL[i].OpCode == OpCode.StartLoop)
+                {
+                    counter++;
+                }
+                else if (IL[i].OpCode == OpCode.EndLoop)
+                {
+                    counter--;
+                }
+                else
+                {
+                    // Do nothing :/
+                }
+                if (counter < 0)
+                {
+                    return false;
+                }
             }
-            prev = code[i].OpCode;
+            return true;
         }
-        return true;
-    }
 
-    public static bool NullProgram(List<Instruction> code)
-    {
-        return code.Count == 0;
+        /// <summary>
+        /// Makes sure that there aren't any obvious infinite loops.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        private static bool ValidLoops(List<Instruction> code)
+        {
+            OpCode prev = OpCode.NoOp;
+            for (int i = 0; i < code.Count; i++)
+            {
+                if (code[i].OpCode == OpCode.StartLoop && prev == OpCode.EndLoop)
+                {
+                    return false;
+                }
+                prev = code[i].OpCode;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Self explanitory, makes sure <paramref name="code"/> has at least one element.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        private static bool NullProgram(List<Instruction> code)
+        {
+            return code.Count == 0;
+        }
     }
 }

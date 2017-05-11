@@ -3,75 +3,60 @@
 using System.Collections.Generic;
 using System.Text;
 
-internal static class Lexer
+namespace BrainFckCompilerCS
 {
-    public static List<Instruction> Lex(string code)
+    /// <summary>
+    /// This class is for the parsing of BrainF*ck code into the internal IL.
+    /// </summary>
+    internal static class Lexer
     {
-        string filteredCode = FilterComments(code);
-        List<Instruction> IL = new List<Instruction>();
-        char prev = filteredCode[0];
-        byte count = 1;
-        for (int i = 1; i < filteredCode.Length; i++)
+        /// <summary>
+        /// Parses <paramref name="code"/> into IL.
+        /// </summary>
+        /// <param name="code">The string that gets parsed to IL.</param>
+        /// <returns>Code as an ordered list of <see cref="Instruction"/>.</returns>
+        public static List<Instruction> Lex(string code)
         {
-            if (prev == filteredCode[i] && ("+-><".IndexOf(filteredCode[i]) != -1))
+            string filteredCode = FilterComments(code);
+            List<Instruction> IL = new List<Instruction>();
+            char prev = filteredCode[0];
+            byte count = 1;
+            for (int i = 1; i < filteredCode.Length; i++)
             {
-                count++;
-            }
-            else
-            {
-                IL.Add(ConvertToIL(prev, count));
-                prev = filteredCode[i];
+                // Some operations can be run length compressed (+-><) so this does that.
+                if (prev == filteredCode[i] && ("+-><".IndexOf(filteredCode[i]) != -1))
+                {
+                    count++;
+                }
+                else
+                {
+                    IL.Add(prev.ToIL(count));
+                    prev = filteredCode[i];
 
-                count = 1;
+                    count = 1;
+                }
             }
+            IL.Add(prev.ToIL(count)); // The loop misses the last item so this is the cleanest way to get it.
+            return IL;
         }
-        IL.Add(ConvertToIL(prev, count));
-        return IL;
-    }
 
-    private static Instruction ConvertToIL(char c, byte count)
-    {
-        switch (c)
+        /// <summary>
+        /// Removes all characters from <paramref name="inputCode"/> except the following:
+        /// +-[],.&lt;&gt;
+        /// </summary>
+        /// <param name="inputCode">The string to filter.</param>
+        /// <returns><paramref name="inputCode"/> without comments.</returns>
+        private static string FilterComments(string inputCode)
         {
-            case '+':
-                return new Instruction(OpCode.AddVal, count);
-
-            case '-':
-                return new Instruction(OpCode.SubVal, count);
-
-            case '>':
-                return new Instruction(OpCode.AddPtr, count);
-
-            case '<':
-                return new Instruction(OpCode.SubPtr, count);
-
-            case ',':
-                return new Instruction(OpCode.GetInput, 0);
-
-            case '.':
-                return new Instruction(OpCode.SetOutput, 0);
-
-            case '[':
-                return new Instruction(OpCode.StartLoop, 0);
-
-            case ']':
-                return new Instruction(OpCode.EndLoop, 0);
-
-            default:
-                throw new System.InvalidOperationException("Nothing should ever get here.");
-        }
-    }
-
-    private static string FilterComments(string code)
-    {
-        StringBuilder sb = new StringBuilder(code.Length);
-        foreach (char c in code)
-        {
-            if ("[+<,.>-]".IndexOf(c) >= 0)
+            StringBuilder sb = new StringBuilder(inputCode.Length);
+            foreach (char c in inputCode)
             {
-                sb.Append(c);
+                if ("[+<,.>-]".IndexOf(c) >= 0)
+                {
+                    sb.Append(c);
+                }
             }
+            return sb.ToString();
         }
-        return sb.ToString();
     }
 }

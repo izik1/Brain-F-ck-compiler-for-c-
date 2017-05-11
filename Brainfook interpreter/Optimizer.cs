@@ -1,159 +1,197 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 using System.Collections.Generic;
 
-public static class Optimizer
+namespace BrainFckCompilerCS
 {
-    private static List<Instruction> code;
-
-    public static void Optimize(List<Instruction> codeIn)
+    /// <summary>
+    /// Optimizes the given IL to be faster and smaller.
+    /// </summary>
+    internal static class Optimizer
     {
-        code = codeIn;
-        int CodeLength = 0;
-        do
+        /// <summary>
+        /// Uses <paramref name="settings"/> to optimize <paramref name="IL"/>.
+        /// </summary>
+        /// <param name="IL">The IL that is to be optimized.</param>
+        /// <param name="settings">
+        /// The compiler settings that tell which optimizations should be used.
+        /// </param>
+        internal static void Optimize(List<Instruction> IL, CompilerSettings settings)
         {
-            CodeLength = code.Count;
-            if (Settings.EliminateRedundentCode)
-            {
-                EliminateRedundency();
-            }
+            int CodeLength = 0;
 
-            if (Settings.SimplifyAssignZeroLoops)
-            {
-                SimplifyAssignZeroLoops();
-            }
-            if (Settings.EliminateEmptyLoops)
-            {
-                EliminateEmptyLoops();
-            }
-        } while (code.Count < CodeLength);
-
-        // Coding at 2:45, fairly certain this should be out of the other loop because it doesn't
-        // affect the other things.
-        if (Settings.EliminateDeadStores)
-        {
+            // It feels evil to use a do while loop but this seems to be the best way to not loop
+            // more than required.
             do
             {
-                CodeLength = code.Count;
-                EliminateDeadStores();
-            } while (code.Count < CodeLength);
-        }
-        if (Settings.MergeAssignThenModifyInstructions)
-        {
-            MergeAssignThenModifyInstructions();
-        }
-    }
+                CodeLength = IL.Count;
+                if (settings.EliminateRedundentCode)
+                {
+                    EliminateRedundency(IL);
+                }
+                if (settings.SimplifyAssignZeroLoops)
+                {
+                    SimplifyAssignZeroLoops(IL);
+                }
+                if (settings.EliminateEmptyLoops)
+                {
+                    EliminateEmptyLoops(IL);
+                }
+            } while (IL.Count < CodeLength);
 
-    private static void EliminateEmptyLoops()
-    {
-        for (int i = code.Count - 2; i >= 0; i--)
-        {
-            if (code[i + 1].OpCode == OpCode.EndLoop && code[i].OpCode == OpCode.StartLoop)
+            // This one gets it's own loop because it doesn't help the other ones, less time spent here.
+            if (settings.EliminateDeadStores)
             {
-                code[i + 1].Invalidate();
-                code[i].Invalidate();
+                do
+                {
+                    CodeLength = IL.Count;
+                    EliminateDeadStores(IL);
+                } while (IL.Count < CodeLength);
+            }
+
+            // Doesn't need a loop.
+            if (settings.MergeAssignThenModifyInstructions)
+            {
+                MergeAssignThenModifyInstructions(IL);
             }
         }
-        code.RemoveNoOps();
-    }
 
-    private static void SimplifyAssignZeroLoops()
-    {
-        for (int i = code.Count - 3; i >= 0; i--)
+        /// <summary>
+        /// Removes all loops that contain nothing ( <see cref="OpCode.StartLoop"/> followed by a
+        /// <see cref="OpCode.EndLoop"/>.)
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void EliminateEmptyLoops(List<Instruction> IL)
         {
-            if (code[i + 2].OpCode == OpCode.EndLoop &&
-                code[i].OpCode == OpCode.StartLoop)
+            for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if ((code[i + 1].OpCode == OpCode.AssignVal && code[i + 1].Value == 0))
+                if (IL[i + 1].OpCode == OpCode.EndLoop && IL[i].OpCode == OpCode.StartLoop)
                 {
-                    code[i + 0].Invalidate();
-                    code[i + 2].Invalidate();
+                    IL[i + 1].Invalidate();
+                    IL[i].Invalidate();
                 }
-                else if (code[i + 1].OpCode.ModifiesValue() && code[i + 1].Value == 1)
+            }
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
+        /// Replaces all loops that assign 0 with a <see cref="Instruction"/> that has <see
+        /// cref="Instruction.OpCode"/> = <see cref="OpCode.AssignVal"/> and <see
+        /// cref="Instruction.Value"/> = 0
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void SimplifyAssignZeroLoops(List<Instruction> IL)
+        {
+            for (int i = IL.Count - 3; i >= 0; i--)
+            {
+                if (IL[i + 2].OpCode == OpCode.EndLoop &&
+                    IL[i].OpCode == OpCode.StartLoop)
                 {
-                    code[i + 0] = new Instruction(OpCode.AssignVal, 0);
-                    code[i + 1].Invalidate();
-                    code[i + 2].Invalidate();
+                    if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
+                    {
+                        IL[i + 0].Invalidate();
+                        IL[i + 2].Invalidate();
+                    }
+                    else if (IL[i + 1].OpCode.ModifiesValue() && IL[i + 1].Value == 1)
+                    {
+                        IL[i + 0] = new Instruction(OpCode.AssignVal, 0);
+                        IL[i + 1].Invalidate();
+                        IL[i + 2].Invalidate();
+                    }
+                    else
+                    {
+                        // Do nothing.
+                    }
+                }
+            }
+
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
+        /// Merges all <see cref="Instruction"/> that have <see cref="OpCode.AssignVal"/> with ones
+        /// that add or subtract to the value.
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        // This name is stupidly long but at least it is descriptive, still coding at 2:55
+        private static void MergeAssignThenModifyInstructions(List<Instruction> IL)
+        {
+            for (int i = IL.Count - 2; i >= 0; i--)
+            {
+                if (IL[i].OpCode == OpCode.AssignVal)
+                {
+                    if (IL[i + 1].OpCode == OpCode.AddVal)
+                    {
+                        IL[i].Value += IL[i + 1].Value;
+                        IL[i + 1].Invalidate();
+                    }
+                    else if (IL[i + 1].OpCode == OpCode.SubVal)
+                    {
+                        IL[i].Value -= IL[i + 1].Value;
+                        IL[i + 1].Invalidate();
+                    }
+                    else
+                    {
+                        // Do nothing.
+                    }
+                }
+            }
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
+        /// Eliminates redundent instructions, for instance add 1 then subtract 5 gets replaced with
+        /// subtract 4
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void EliminateRedundency(List<Instruction> IL)
+        {
+            for (int i = IL.Count - 2; i >= 0; i--)
+            {
+                if (IL[i + 1].OpCode == IL[i].OpCode && IL[i].OpCode.IsReversable())
+                {
+                    IL[i].Value += IL[i + 1].Value;
+                    IL[i + 1].Invalidate();
+                }
+                else if (IL[i + 1].OpCode == IL[i].OpCode.GetReversedCode() && IL[i].OpCode.IsReversable())
+                {
+                    if (IL[i + 1].Value > IL[i].Value)
+                    {
+                        IL[i + 1].Value -= IL[i].Value;
+                        IL[i].Invalidate();
+                    }
+                    else if (IL[i + 1].Value < IL[i].Value)
+                    {
+                        IL[i].Value -= IL[i + 1].Value;
+                        IL[i + 1].Invalidate();
+                    }
+                    else
+                    {
+                        IL[i].Invalidate();
+                        IL[i + 1].Invalidate();
+                    }
                 }
                 else
                 {
-                    // Do nothing.
+                    // Do nothing as this is a normal case but nothing needs to be done.
                 }
             }
+            IL.RemoveNoOps();
         }
 
-        code.RemoveNoOps();
-    }
-
-    // This name is stupidly long but at least it is descriptive, still coding at 2:55
-    private static void MergeAssignThenModifyInstructions()
-    {
-        for (int i = code.Count - 2; i >= 0; i--)
+        /// <summary>
+        /// Eliminate changes to values that get overridden.
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void EliminateDeadStores(List<Instruction> IL)
         {
-            if (code[i].OpCode == OpCode.AssignVal)
+            for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (code[i + 1].OpCode == OpCode.AddVal)
+                if ((IL[i + 1].OpCode.AssignsValue() && (IL[i].OpCode.ModifiesValue() || IL[i].OpCode.AssignsValue())))
                 {
-                    code[i].Value += code[i + 1].Value;
-                    code[i + 1].Invalidate();
-                }
-                else if (code[i + 1].OpCode == OpCode.SubVal)
-                {
-                    code[i].Value -= code[i + 1].Value;
-                    code[i + 1].Invalidate();
-                }
-                else
-                {
-                    // Do nothing.
+                    IL[i].Invalidate();
                 }
             }
+            IL.RemoveNoOps();
         }
-        code.RemoveNoOps();
-    }
-
-    private static void EliminateRedundency()
-    {
-        for (int i = code.Count - 2; i >= 0; i--)
-        {
-            if (code[i + 1].OpCode == code[i].OpCode && code[i].OpCode.IsReversable())
-            {
-                code[i].Value += code[i + 1].Value;
-                code[i + 1].Invalidate();
-            }
-            else if (code[i + 1].OpCode == code[i].OpCode.GetReversedCode() && code[i].OpCode.IsReversable())
-            {
-                if (code[i + 1].Value > code[i].Value)
-                {
-                    code[i + 1].Value -= code[i].Value;
-                    code[i].Invalidate();
-                }
-                else if (code[i + 1].Value < code[i].Value)
-                {
-                    code[i].Value -= code[i + 1].Value;
-                    code[i + 1].Invalidate();
-                }
-                else
-                {
-                    code[i].Invalidate();
-                    code[i + 1].Invalidate();
-                }
-            }
-            else
-            {
-                // Do nothing as this is a normal case but nothing needs to be done.
-            }
-        }
-        code.RemoveNoOps();
-    }
-
-    private static void EliminateDeadStores()
-    {
-        for (int i = code.Count - 2; i >= 0; i--)
-        {
-            if ((code[i + 1].OpCode.AssignsValue() && (code[i].OpCode.ModifiesValue() || code[i].OpCode.AssignsValue())))
-            {
-                code[i].Invalidate();
-            }
-        }
-        code.RemoveNoOps();
     }
 }

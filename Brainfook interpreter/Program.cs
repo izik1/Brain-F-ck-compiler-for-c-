@@ -2,19 +2,18 @@
 
 using System;
 
-public static class Program
+namespace BrainFckCompilerCS
 {
-    public static event Action OnCompile;
-
-    public static event Action OnOpen;
-
-    private static void Main()
+    internal static class Program
     {
-        UIHandler.SubscribeEvents();
-        OnOpen();
-        OnCompile();
-
-        Console.WriteLine((Compiler.Compile(Settings.InputCode) ? "Compiled!" : "Failed to compile"));
-        Console.ReadKey();
+        /// <summary>
+        /// The Entry point of the application just does some simple UI requests and runs <see cref="Compiler.Compile(CompilerSettings)"/>
+        /// </summary>
+        private static void Main()
+        {
+            CompilerOutput output = Compiler.Compile(UIHandler.GetUserSettings());
+            Console.WriteLine(output.CompileSuccess ? "Compiled!" : output.ErrorText);
+            Console.ReadKey(); // to prevent the application from closing.
+        }
     }
 }
