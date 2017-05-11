@@ -17,9 +17,9 @@ public static class Optimizer
                 EliminateRedundency();
             }
 
-            if (Settings.SimplifyToZeroLoops)
+            if (Settings.SimplifyAssignZeroLoops)
             {
-                SimplifyToZeroLoops();
+                SimplifyAssignZeroLoops();
             }
             if (Settings.EliminateEmptyLoops)
             {
@@ -53,6 +53,34 @@ public static class Optimizer
                 code[i].Invalidate();
             }
         }
+        code.RemoveNoOps();
+    }
+
+    private static void SimplifyAssignZeroLoops()
+    {
+        for (int i = code.Count - 3; i >= 0; i--)
+        {
+            if (code[i + 2].OpCode == OpCode.EndLoop &&
+                code[i].OpCode == OpCode.StartLoop)
+            {
+                if ((code[i + 1].OpCode == OpCode.AssignVal && code[i + 1].Value == 0))
+                {
+                    code[i + 0].Invalidate();
+                    code[i + 2].Invalidate();
+                }
+                else if (code[i + 1].OpCode.ModifiesValue() && code[i + 1].Value == 1)
+                {
+                    code[i + 0] = new Instruction(OpCode.AssignVal, 0);
+                    code[i + 1].Invalidate();
+                    code[i + 2].Invalidate();
+                }
+                else
+                {
+                    // Do nothing.
+                }
+            }
+        }
+
         code.RemoveNoOps();
     }
 
@@ -112,22 +140,6 @@ public static class Optimizer
             else
             {
                 // Do nothing as this is a normal case but nothing needs to be done.
-            }
-        }
-        code.RemoveNoOps();
-    }
-
-    private static void SimplifyToZeroLoops()
-    {
-        for (int i = code.Count - 3; i >= 0; i--)
-        {
-            if (code[i + 2].OpCode == OpCode.EndLoop &&
-                (code[i + 1].OpCode.ModifiesValue() && code[i + 1].Value == 1) &&
-                code[i].OpCode == OpCode.StartLoop)
-            {
-                code[i + 0] = new Instruction(OpCode.AssignVal, 0);
-                code[i + 1].Invalidate();
-                code[i + 2].Invalidate();
             }
         }
         code.RemoveNoOps();

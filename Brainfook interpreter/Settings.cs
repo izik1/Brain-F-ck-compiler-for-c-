@@ -6,7 +6,7 @@ public static class Settings
 
     public static bool EliminateDeadStores { get; set; }
 
-    public static bool SimplifyToZeroLoops { get; set; } // Basically loops that set the value at the current pointer to 0.
+    public static bool SimplifyAssignZeroLoops { get; set; } // Basically loops that set the value at the current pointer to 0.
 
     public static bool GetCodeFromFile { get; set; }
 
