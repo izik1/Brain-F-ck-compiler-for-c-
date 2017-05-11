@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler.cs" />
+    <Compile Include="CompilerOutput.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HelperFuncs.cs" />
     <Compile Include="Instruction.cs" />
