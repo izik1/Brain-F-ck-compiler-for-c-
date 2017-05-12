@@ -3,7 +3,7 @@
 using System;
 using System.IO;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// A front end for the compiler.

@@ -7,7 +7,7 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// </summary>

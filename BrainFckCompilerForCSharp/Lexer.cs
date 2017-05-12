@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// This class is for the parsing of BrainF*ck code into the internal IL.

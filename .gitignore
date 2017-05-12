@@ -1,5 +1,5 @@
-Brainfook interpreter/obj/
-Brainfook interpreter/bin/
-Brainfook interpreter/Brainfook interpreter.csproj.user
-Brainfook interpreter/Brainfook interpreter.ruleset
-Brainfook interpreter/GlobalSuppressions.cs
+BrainFckCompilerForCSharp/obj/
+BrainFckCompilerForCSharp/bin/
+BrainFckCompilerForCSharp/Brainfook interpreter.csproj.user
+BrainFckCompilerForCSharp/Brainfook interpreter.ruleset
+BrainFckCompilerForCSharp/GlobalSuppressions.cs

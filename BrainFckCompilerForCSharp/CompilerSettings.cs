@@ -1,5 +1,5 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// The settings that determine how the compiler should behave. such settings include

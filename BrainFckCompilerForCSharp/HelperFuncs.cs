@@ -1,7 +1,7 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 using System.Collections.Generic;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// Some Extension methods that get used everywhere in the compiler.

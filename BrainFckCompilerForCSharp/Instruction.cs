@@ -2,7 +2,7 @@
 
 using System;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// </summary>

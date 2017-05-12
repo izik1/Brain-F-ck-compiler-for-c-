@@ -1,7 +1,7 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 using System.Collections.Generic;
 
-namespace BrainFckCompilerCS
+namespace BrainFckCompilerCSharp
 {
     /// <summary>
     /// Optimizes the given IL to be faster and smaller.
