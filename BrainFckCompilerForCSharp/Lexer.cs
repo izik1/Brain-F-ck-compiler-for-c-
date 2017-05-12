@@ -37,6 +37,7 @@ namespace BrainFckCompilerCSharp
                 }
             }
             IL.Add(prev.ToIL(count)); // The loop misses the last item so this is the cleanest way to get it.
+            IL.RemoveNoOps();
             return IL;
         }
 

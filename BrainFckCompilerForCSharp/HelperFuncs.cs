@@ -38,16 +38,16 @@ namespace BrainFckCompilerCSharp
             switch (c)
             {
                 case '+':
-                    return new Instruction(OpCode.AddVal, value);
+                    return new Instruction(value > 0 ? OpCode.AddVal : OpCode.NoOp, value);
 
                 case '-':
-                    return new Instruction(OpCode.SubVal, value);
+                    return new Instruction(value > 0 ? OpCode.SubVal : OpCode.NoOp, value);
 
                 case '>':
-                    return new Instruction(OpCode.AddPtr, value);
+                    return new Instruction(value > 0 ? OpCode.AddPtr : OpCode.NoOp, value);
 
                 case '<':
-                    return new Instruction(OpCode.SubPtr, value);
+                    return new Instruction(value > 0 ? OpCode.SubPtr : OpCode.NoOp, value);
 
                 case ',':
                     return new Instruction(OpCode.GetInput, 0);
