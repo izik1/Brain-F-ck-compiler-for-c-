@@ -56,8 +56,10 @@ namespace BrainFckCompilerCSharp
 
             if (results.Errors.Count > 0)
             {
-                // This *shouldn't* ever happen because all errors *should* be caught by the validator.
-                return new CompilerOutput(false, "Unexpected compilation fail.");
+                // This *shouldn't* ever happen because all errors *should* be caught by the
+                // validator. The only known instance of this occuring is when the application can't
+                // write to the file.
+                return new CompilerOutput(false, "Unexpected compilation fail. Maybe the output is already being ran?");
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
