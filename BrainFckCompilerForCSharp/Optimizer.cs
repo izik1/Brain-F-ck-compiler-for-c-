@@ -98,32 +98,35 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (IL[i + 1].OpCode == IL[i].OpCode && IL[i].OpCode.IsReversable())
+                if (IL[i].OpCode.IsReversable()) // The following if and else if both would check for this.
                 {
-                    IL[i].Value += IL[i + 1].Value;
-                    IL[i + 1].Invalidate();
-                }
-                else if (IL[i + 1].OpCode == IL[i].OpCode.GetReversedCode() && IL[i].OpCode.IsReversable())
-                {
-                    if (IL[i + 1].Value > IL[i].Value)
+                    if (IL[i + 1].OpCode == IL[i].OpCode)
                     {
-                        IL[i + 1].Value -= IL[i].Value;
-                        IL[i].Invalidate();
-                    }
-                    else if (IL[i + 1].Value < IL[i].Value)
-                    {
-                        IL[i].Value -= IL[i + 1].Value;
+                        IL[i].Value += IL[i + 1].Value;
                         IL[i + 1].Invalidate();
+                    }
+                    else if (IL[i + 1].OpCode == IL[i].OpCode.GetReversedCode())
+                    {
+                        if (IL[i + 1].Value > IL[i].Value)
+                        {
+                            IL[i + 1].Value -= IL[i].Value;
+                            IL[i].Invalidate();
+                        }
+                        else if (IL[i + 1].Value < IL[i].Value)
+                        {
+                            IL[i].Value -= IL[i + 1].Value;
+                            IL[i + 1].Invalidate();
+                        }
+                        else
+                        {
+                            IL[i].Invalidate();
+                            IL[i + 1].Invalidate();
+                        }
                     }
                     else
                     {
-                        IL[i].Invalidate();
-                        IL[i + 1].Invalidate();
+                        // Do nothing as this is a normal case but nothing needs to be done.
                     }
-                }
-                else
-                {
-                    // Do nothing as this is a normal case but nothing needs to be done.
                 }
             }
             IL.RemoveNoOps();
