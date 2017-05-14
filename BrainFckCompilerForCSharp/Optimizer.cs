@@ -56,6 +56,22 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
+        /// Eliminate changes to values that get overridden.
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void EliminateDeadStores(List<Instruction> IL)
+        {
+            for (int i = IL.Count - 2; i >= 0; i--)
+            {
+                if (IsDeadStore(IL[i].OpCode, IL[i + 1].OpCode))
+                {
+                    IL[i].Invalidate();
+                }
+            }
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
         /// Removes all loops that contain nothing ( <see cref="OpCode.StartLoop"/> followed by a
         /// <see cref="OpCode.EndLoop"/>.)
         /// </summary>
@@ -64,75 +80,10 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (IL[i + 1].OpCode == OpCode.EndLoop && IL[i].OpCode == OpCode.StartLoop)
+                if (IsEmptyLoop(IL[i].OpCode, IL[i + 1].OpCode))
                 {
                     IL[i + 1].Invalidate();
                     IL[i].Invalidate();
-                }
-            }
-            IL.RemoveNoOps();
-        }
-
-        /// <summary>
-        /// Replaces all loops that assign 0 with a <see cref="Instruction"/> that has <see
-        /// cref="Instruction.OpCode"/> = <see cref="OpCode.AssignVal"/> and <see
-        /// cref="Instruction.Value"/> = 0
-        /// </summary>
-        /// <param name="IL">The IL code to be optimized.</param>
-        private static void SimplifyAssignZeroLoops(List<Instruction> IL)
-        {
-            for (int i = IL.Count - 3; i >= 0; i--)
-            {
-                if (IL[i + 2].OpCode == OpCode.EndLoop &&
-                    IL[i].OpCode == OpCode.StartLoop)
-                {
-                    if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
-                    {
-                        IL[i + 0].Invalidate();
-                        IL[i + 2].Invalidate();
-                    }
-                    else if (IL[i + 1].OpCode.ModifiesValue() && IL[i + 1].Value == 1)
-                    {
-                        IL[i + 0] = new Instruction(OpCode.AssignVal, 0);
-                        IL[i + 1].Invalidate();
-                        IL[i + 2].Invalidate();
-                    }
-                    else
-                    {
-                        // Do nothing.
-                    }
-                }
-            }
-
-            IL.RemoveNoOps();
-        }
-
-        /// <summary>
-        /// Merges all <see cref="Instruction"/> that have <see cref="OpCode.AssignVal"/> with ones
-        /// that add or subtract to the value.
-        /// </summary>
-        /// <param name="IL">The IL code to be optimized.</param>
-        // This name is stupidly long but at least it is descriptive, still coding at 2:55
-        private static void MergeAssignThenModifyInstructions(List<Instruction> IL)
-        {
-            for (int i = IL.Count - 2; i >= 0; i--)
-            {
-                if (IL[i].OpCode == OpCode.AssignVal)
-                {
-                    if (IL[i + 1].OpCode == OpCode.AddVal)
-                    {
-                        IL[i].Value += IL[i + 1].Value;
-                        IL[i + 1].Invalidate();
-                    }
-                    else if (IL[i + 1].OpCode == OpCode.SubVal)
-                    {
-                        IL[i].Value -= IL[i + 1].Value;
-                        IL[i + 1].Invalidate();
-                    }
-                    else
-                    {
-                        // Do nothing.
-                    }
                 }
             }
             IL.RemoveNoOps();
@@ -179,18 +130,94 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
-        /// Eliminate changes to values that get overridden.
+        /// Checks if <paramref name="current"/> gets overridden by <paramref name="next"/>.
+        /// </summary>
+        /// <param name="current">The OpCode of the current instruction.</param>
+        /// <param name="next">The OpCode of the next instruction.</param>
+        /// <returns>
+        /// True if <paramref name="current"/> gets overridden by <paramref name="next"/>, false otherwise.
+        /// </returns>
+        private static bool IsDeadStore(OpCode current, OpCode next)
+        {
+            return next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
+        }
+
+        /// <summary>
+        /// Checks if <paramref name="current"/> and <paramref name="next"/> form an empty loop. ( []
+        /// in brain f*ck or <see cref="OpCode.StartLoop"/> then <see cref="OpCode.EndLoop"/> in IL)
+        /// </summary>
+        /// <param name="current">The OpCode of the current instruction.</param>
+        /// <param name="next">The OpCode of the next instruction.</param>
+        /// <returns>
+        /// True if <paramref name="current"/> and <paramref name="next"/> form an empty loop, false otherwise.
+        /// </returns>
+        private static bool IsEmptyLoop(OpCode current, OpCode next)
+        {
+            return current == OpCode.StartLoop && next == OpCode.EndLoop;
+        }
+
+        /// <summary>
+        /// Merges all <see cref="Instruction"/> that have <see cref="OpCode.AssignVal"/> with ones
+        /// that add or subtract to the value.
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void EliminateDeadStores(List<Instruction> IL)
+        // This name is stupidly long but at least it is descriptive, still coding at 2:55
+        private static void MergeAssignThenModifyInstructions(List<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if ((IL[i + 1].OpCode.AssignsValue() && (IL[i].OpCode.ModifiesValue() || IL[i].OpCode.AssignsValue())))
+                if (IL[i].OpCode == OpCode.AssignVal)
                 {
-                    IL[i].Invalidate();
+                    if (IL[i + 1].OpCode == OpCode.AddVal)
+                    {
+                        IL[i].Value += IL[i + 1].Value;
+                        IL[i + 1].Invalidate();
+                    }
+                    else if (IL[i + 1].OpCode == OpCode.SubVal)
+                    {
+                        IL[i].Value -= IL[i + 1].Value;
+                        IL[i + 1].Invalidate();
+                    }
+                    else
+                    {
+                        // Do nothing.
+                    }
                 }
             }
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
+        /// Replaces all loops that assign 0 with a <see cref="Instruction"/> that has <see
+        /// cref="Instruction.OpCode"/> = <see cref="OpCode.AssignVal"/> and <see
+        /// cref="Instruction.Value"/> = 0
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void SimplifyAssignZeroLoops(List<Instruction> IL)
+        {
+            for (int i = IL.Count - 3; i >= 0; i--)
+            {
+                if (IL[i + 2].OpCode == OpCode.EndLoop &&
+                    IL[i].OpCode == OpCode.StartLoop)
+                {
+                    if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
+                    {
+                        IL[i + 0].Invalidate();
+                        IL[i + 2].Invalidate();
+                    }
+                    else if (IL[i + 1].OpCode.ModifiesValue() && IL[i + 1].Value == 1)
+                    {
+                        IL[i + 0] = new Instruction(OpCode.AssignVal, 0);
+                        IL[i + 1].Invalidate();
+                        IL[i + 2].Invalidate();
+                    }
+                    else
+                    {
+                        // Do nothing.
+                    }
+                }
+            }
+
             IL.RemoveNoOps();
         }
     }
