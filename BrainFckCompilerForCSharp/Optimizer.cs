@@ -80,7 +80,7 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (IsEmptyLoop(IL[i].OpCode, IL[i + 1].OpCode))
+                if (IsLoop(IL[i].OpCode, IL[i + 1].OpCode))
                 {
                     IL[i + 1].Invalidate();
                     IL[i].Invalidate();
@@ -146,17 +146,18 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
-        /// Checks if <paramref name="current"/> and <paramref name="next"/> form an empty loop. ( []
-        /// in brain f*ck or <see cref="OpCode.StartLoop"/> then <see cref="OpCode.EndLoop"/> in IL)
+        /// Checks if <paramref name="first"/> and <paramref name="second"/> form a loop. ( [...] in
+        /// brain f*ck or <see cref="OpCode.StartLoop"/> &lt;Any number of instructions&gt; <see
+        /// cref="OpCode.EndLoop"/> in IL)
         /// </summary>
-        /// <param name="current">The OpCode of the current instruction.</param>
-        /// <param name="next">The OpCode of the next instruction.</param>
+        /// <param name="first">The OpCode of the first instruction.</param>
+        /// <param name="second">The OpCode of the second instruction.</param>
         /// <returns>
-        /// True if <paramref name="current"/> and <paramref name="next"/> form an empty loop, false otherwise.
+        /// True if <paramref name="first"/> and <paramref name="second"/> a loop, false otherwise.
         /// </returns>
-        private static bool IsEmptyLoop(OpCode current, OpCode next)
+        private static bool IsLoop(OpCode first, OpCode second)
         {
-            return current == OpCode.StartLoop && next == OpCode.EndLoop;
+            return first == OpCode.StartLoop && second == OpCode.EndLoop;
         }
 
         /// <summary>
@@ -200,8 +201,7 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 3; i >= 0; i--)
             {
-                if (IL[i + 2].OpCode == OpCode.EndLoop &&
-                    IL[i].OpCode == OpCode.StartLoop)
+                if (IsLoop(IL[i].OpCode, IL[i + 2].OpCode))
                 {
                     if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
                     {
