@@ -63,7 +63,7 @@ namespace BrainFckCompilerCSharp
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
-            WriteToFiles(string.Join("\n", IL), compiled, settings);
+            WriteToFiles(string.Join(Environment.NewLine, IL), compiled, settings);
             return new CompilerOutput(true, string.Empty); // Made it.
         }
 
