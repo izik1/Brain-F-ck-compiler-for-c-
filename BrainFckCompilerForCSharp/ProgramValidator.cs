@@ -15,21 +15,21 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IL"></param>
         /// <returns></returns>
-        internal static Tuple<bool, string> Validate(List<Instruction> IL)
+        internal static (bool ValidProgram, string OutputText) Validate(List<Instruction> IL)
         {
             if (NullProgram(IL))
             {
-                return new Tuple<bool, string>(false, "Null program");
+                return (false, "Null program");
             }
             if (!LoopsBalanced(IL))
             {
-                return new Tuple<bool, string>(false, "Loops aren't balanced ( [[] ) or maybe loops are out of order ( ][ ) ");
+                return (false, "Loops aren't balanced ( [[] ) or maybe loops are out of order ( ][ ) ");
             }
             if (!ValidLoops(IL))
             {
-                return new Tuple<bool, string>(false, "You have an infinite loop somewhere.");
+                return (false, "You have an infinite loop somewhere.");
             }
-            return new Tuple<bool, string>(true, "Valid program");
+            return (true, "Valid program");
         }
 
         /// <summary>

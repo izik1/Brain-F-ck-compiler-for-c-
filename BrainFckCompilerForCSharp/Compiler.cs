@@ -20,19 +20,18 @@ namespace BrainFckCompilerCSharp
         /// <returns>The success of the compilation.</returns>
         public static CompilerOutput Compile(CompilerSettings settings)
         {
-            Tuple<bool, string> ValidationState;
             List<Instruction> IL = Lexer.Lex(settings.InputCode);
-            ValidationState = ProgramValidator.Validate(IL);
-            if (!ValidationState.Item1)
+            (bool ValidProgram, string OutputText) ValidationState = ProgramValidator.Validate(IL);
+            if (!ValidationState.ValidProgram)
             {
-                return new CompilerOutput(false, ValidationState.Item2 +
+                return new CompilerOutput(false, ValidationState.OutputText +
                     " (pre optimization)"); // Invalid programs can't compile.
             }
             Optimizer.Optimize(IL, settings);
             ValidationState = ProgramValidator.Validate(IL);
-            if (!ValidationState.Item1)
+            if (!ValidationState.ValidProgram)
             {
-                return new CompilerOutput(false, ValidationState.Item2 +
+                return new CompilerOutput(false, ValidationState.OutputText +
                     " (post optimization)"); // Optimizations broke the code.
             }
 
