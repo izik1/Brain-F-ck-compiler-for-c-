@@ -146,9 +146,7 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
-        /// Checks if <paramref name="first"/> and <paramref name="second"/> form a loop. ( [...] in
-        /// brain f*ck or <see cref="OpCode.StartLoop"/> &lt;Any number of instructions&gt; <see
-        /// cref="OpCode.EndLoop"/> in IL)
+        /// Checks if <paramref name="first"/> and <paramref name="second"/> form a loop.
         /// </summary>
         /// <param name="first">The OpCode of the first instruction.</param>
         /// <param name="second">The OpCode of the second instruction.</param>
