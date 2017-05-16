@@ -208,7 +208,9 @@ namespace BrainFckCompilerCSharp
                         IL[i + 0].Invalidate();
                         IL[i + 2].Invalidate();
                     }
-                    else if (IL[i + 1].OpCode.ModifiesValue() && IL[i + 1].Value == 1)
+
+                    // As it turns out, all odd numbers are valid, not just 1.
+                    else if (IL[i + 1].OpCode.ModifiesValue() && IL[i + 1].Value % 2 != 0)
                     {
                         IL[i + 0] = new Instruction(OpCode.AssignVal, 0);
                         IL[i + 1].Invalidate();

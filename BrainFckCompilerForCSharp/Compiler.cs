@@ -39,7 +39,7 @@ namespace BrainFckCompilerCSharp
             // Why is this using a constant string? because a better way to do this hasn't been
             // found. The reason why this isn't a $ string is because of the brackets.
             string compiled =
-                "using System;public class Program{public static void Main(){byte[] ram=new byte[256];byte ptr=0;" +
+                "using System;public class Program{public static void Main(){byte[] ram=new byte[256];" +
                 GetInjectString(IL) +
                 "Console.ReadKey();}}";
             CSharpCodeProvider provider = new CSharpCodeProvider();
@@ -80,7 +80,16 @@ namespace BrainFckCompilerCSharp
         private static string GetInjectString(List<Instruction> IL)
         {
             StringBuilder inject = new StringBuilder();
-            for (int i = 0; i < IL.Count; i++)
+
+            // these few lines are for checking to see if the first instruction would be to add to /
+            // subtract from the pointer because if it is a little bit of micro optimization can be
+            // made by just assigning it flat out.
+            bool skipFirst = IL[0].OpCode == OpCode.AddPtr || IL[0].OpCode == OpCode.SubPtr;
+            inject.Append(skipFirst ?
+                $"byte ptr{(IL[0].OpCode == OpCode.AddPtr ? IL[0].Value : (byte)(255 - IL[0].Value))};" :
+                "byte ptr=0;");
+
+            for (int i = skipFirst ? 1 : 0; i < IL.Count; i++)
             {
                 inject.Append(IL[i].ToString(true));
             }
