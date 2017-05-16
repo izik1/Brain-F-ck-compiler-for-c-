@@ -84,42 +84,10 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (IsLoop(IL[i].OpCode, IL[i + 1].OpCode))
+                if (HelperFuncs.IsIlLoop(IL[i].OpCode, IL[i + 1].OpCode))
                 {
                     IL[i + 1].Invalidate();
                     IL[i].Invalidate();
-                }
-            }
-            IL.RemoveNoOps();
-        }
-
-        private static void EliminateUnreachableLoops(List<Instruction> IL)
-        {
-            Stack<int> LoopEnds = new Stack<int>();
-            bool DetectUnreachableLoops(int current)
-            {
-                return (IL[current + 1].OpCode == OpCode.StartLoop &&
-                    (IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0 || current == 0));
-            }
-            for (int i = IL.Count - 1; i >= 0; i--)
-            {
-                if (IL[i].OpCode == OpCode.EndLoop)
-                {
-                    LoopEnds.Push(i);
-                }
-
-                // If MostRecentLoopEnd is less than 1 no loop can made.
-                else if (LoopEnds.Count > 0 && DetectUnreachableLoops(i))
-                {
-                    int MostRecentLoopEnd = LoopEnds.Pop();
-                    for (int j = i; j < MostRecentLoopEnd + 1; j++)
-                    {
-                        IL[j].Invalidate();
-                    }
-                }
-                else
-                {
-                    // Do nothing.
                 }
             }
             IL.RemoveNoOps();
@@ -138,6 +106,8 @@ namespace BrainFckCompilerCSharp
                 {
                     if (IL[i + 1].OpCode == IL[i].OpCode)
                     {
+                        // Combine the two instructions and Invalidate the 2nd one because it gets
+                        // removed faster when List.Remove is called.
                         IL[i].Value += IL[i + 1].Value;
                         IL[i + 1].Invalidate();
                     }
@@ -169,6 +139,44 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
+        /// Removes all loops that are unreachable (meaning that no matter what they can't run)
+        /// </summary>
+        /// <param name="IL">The IL code to be optimized.</param>
+        private static void EliminateUnreachableLoops(List<Instruction> IL)
+        {
+            Stack<int> LoopEnds = new Stack<int>();
+
+            // Not sure if this local function should exist.
+            bool DetectUnreachableLoops(int current)
+            {
+                return (IL[current + 1].OpCode == OpCode.StartLoop &&
+                    (IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0 || current == 0));
+            }
+            for (int i = IL.Count - 1; i >= 0; i--)
+            {
+                if (IL[i].OpCode == OpCode.EndLoop)
+                {
+                    LoopEnds.Push(i);
+                }
+
+                // If MostRecentLoopEnd is less than 1 no loop can made.
+                else if (LoopEnds.Count > 0 && DetectUnreachableLoops(i))
+                {
+                    int MostRecentLoopEnd = LoopEnds.Pop();
+                    for (int j = i; j < MostRecentLoopEnd + 1; j++)
+                    {
+                        IL[j].Invalidate();
+                    }
+                }
+                else
+                {
+                    // Do nothing.
+                }
+            }
+            IL.RemoveNoOps();
+        }
+
+        /// <summary>
         /// Checks if <paramref name="current"/> gets overridden by <paramref name="next"/>.
         /// </summary>
         /// <param name="current">The OpCode of the current instruction.</param>
@@ -179,19 +187,6 @@ namespace BrainFckCompilerCSharp
         private static bool IsDeadStore(OpCode current, OpCode next)
         {
             return next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
-        }
-
-        /// <summary>
-        /// Checks if <paramref name="first"/> and <paramref name="second"/> form a loop.
-        /// </summary>
-        /// <param name="first">The OpCode of the first instruction.</param>
-        /// <param name="second">The OpCode of the second instruction.</param>
-        /// <returns>
-        /// True if <paramref name="first"/> and <paramref name="second"/> a loop, false otherwise.
-        /// </returns>
-        private static bool IsLoop(OpCode first, OpCode second)
-        {
-            return first == OpCode.StartLoop && second == OpCode.EndLoop;
         }
 
         /// <summary>
@@ -235,7 +230,7 @@ namespace BrainFckCompilerCSharp
         {
             for (int i = IL.Count - 3; i >= 0; i--)
             {
-                if (IsLoop(IL[i].OpCode, IL[i + 2].OpCode))
+                if (HelperFuncs.IsIlLoop(IL[i].OpCode, IL[i + 2].OpCode))
                 {
                     if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
                     {
@@ -256,7 +251,6 @@ namespace BrainFckCompilerCSharp
                     }
                 }
             }
-
             IL.RemoveNoOps();
         }
     }

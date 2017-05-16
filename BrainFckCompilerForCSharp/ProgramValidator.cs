@@ -1,6 +1,5 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -17,7 +16,7 @@ namespace BrainFckCompilerCSharp
         /// <returns></returns>
         internal static (bool ValidProgram, string OutputText) Validate(List<Instruction> IL)
         {
-            if (NullProgram(IL))
+            if (IL.Count == 0)
             {
                 return (false, "Null program");
             }
@@ -69,30 +68,18 @@ namespace BrainFckCompilerCSharp
         /// <summary>
         /// Makes sure that there aren't any obvious infinite loops.
         /// </summary>
-        /// <param name="code"></param>
+        /// <param name="IL"></param>
         /// <returns></returns>
-        private static bool ValidLoops(List<Instruction> code)
+        private static bool ValidLoops(List<Instruction> IL)
         {
-            OpCode prev = OpCode.NoOp;
-            for (int i = 0; i < code.Count; i++)
+            for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (code[i].OpCode == OpCode.StartLoop && prev == OpCode.EndLoop)
+                if (HelperFuncs.IsIlLoop(IL[i].OpCode, IL[i + 1].OpCode))
                 {
                     return false;
                 }
-                prev = code[i].OpCode;
             }
             return true;
-        }
-
-        /// <summary>
-        /// Self explanitory, makes sure <paramref name="code"/> has at least one element.
-        /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
-        private static bool NullProgram(List<Instruction> code)
-        {
-            return code.Count == 0;
         }
     }
 }
