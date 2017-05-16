@@ -36,6 +36,10 @@ namespace BrainFckCompilerCSharp
                 {
                     EliminateEmptyLoops(IL);
                 }
+                if (settings.EliminateUnreachableLoops)
+                {
+                    EliminateUnreachableLoops(IL);
+                }
             } while (IL.Count < CodeLength);
 
             // This one gets it's own loop because it doesn't help the other ones, less time spent here.
@@ -84,6 +88,38 @@ namespace BrainFckCompilerCSharp
                 {
                     IL[i + 1].Invalidate();
                     IL[i].Invalidate();
+                }
+            }
+            IL.RemoveNoOps();
+        }
+
+        private static void EliminateUnreachableLoops(List<Instruction> IL)
+        {
+            Stack<int> LoopEnds = new Stack<int>();
+            bool DetectUnreachableLoops(int current)
+            {
+                return (IL[current + 1].OpCode == OpCode.StartLoop &&
+                    (IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0 || current == 0));
+            }
+            for (int i = IL.Count - 1; i >= 0; i--)
+            {
+                if (IL[i].OpCode == OpCode.EndLoop)
+                {
+                    LoopEnds.Push(i);
+                }
+
+                // If MostRecentLoopEnd is less than 1 no loop can made.
+                else if (LoopEnds.Count > 0 && DetectUnreachableLoops(i))
+                {
+                    int MostRecentLoopEnd = LoopEnds.Pop();
+                    for (int j = i; j < MostRecentLoopEnd + 1; j++)
+                    {
+                        IL[j].Invalidate();
+                    }
+                }
+                else
+                {
+                    // Do nothing.
                 }
             }
             IL.RemoveNoOps();

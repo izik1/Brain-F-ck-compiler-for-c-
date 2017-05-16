@@ -29,6 +29,7 @@ namespace BrainFckCompilerCSharp
                 "Merge assignment instructions with following add/sub instructions?"),
                 EliminateEmptyLoops = GetUserInput("Eliminate Empty loops?"),
                 GetCodeFromFile = getCodeFromFile,
+                EliminateUnreachableLoops = GetUserInput("Eliminate unreachable loops?"),
                 InputCode = GetUserCode(getCodeFromFile)
             };
         }

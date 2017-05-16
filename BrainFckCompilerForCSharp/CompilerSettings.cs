@@ -22,6 +22,8 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         public bool EliminateRedundentCode { get; set; }
 
+        public bool EliminateUnreachableLoops { get; set; }
+
         /// <summary>
         /// File name of the output CSharp source, if put as an empty string, no file will be
         /// outputted. DO NOT give a path and DO NOT give an extension (unless a second extension is good)
