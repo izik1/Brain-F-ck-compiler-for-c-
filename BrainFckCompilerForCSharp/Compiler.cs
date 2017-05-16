@@ -18,21 +18,19 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="settings"></param>
         /// <returns>The success of the compilation.</returns>
-        public static CompilerOutput Compile(CompilerSettings settings)
+        public static (bool Success, string ErrorText) Compile(CompilerSettings settings)
         {
             List<Instruction> IL = Lexer.Lex(settings.InputCode);
             (bool ValidProgram, string OutputText) ValidationState = ProgramValidator.Validate(IL);
             if (!ValidationState.ValidProgram)
             {
-                return new CompilerOutput(false, ValidationState.OutputText +
-                    " (pre optimization)"); // Invalid programs can't compile.
+                return (false, ValidationState.OutputText + " (pre optimization)"); // Invalid programs can't compile.
             }
             Optimizer.Optimize(IL, settings);
             ValidationState = ProgramValidator.Validate(IL);
             if (!ValidationState.ValidProgram)
             {
-                return new CompilerOutput(false, ValidationState.OutputText +
-                    " (post optimization)"); // Optimizations broke the code.
+                return (false, ValidationState.OutputText + " (post optimization)"); // Optimizations broke the code.
             }
 
             // Why is this using a constant string? because a better way to do this hasn't been
@@ -58,12 +56,12 @@ namespace BrainFckCompilerCSharp
                 // This *shouldn't* ever happen because all errors *should* be caught by the
                 // validator. The only known instance of this occuring is when the application can't
                 // write to the file.
-                return new CompilerOutput(false, "Unexpected compilation fail. Maybe the output is already being ran?");
+                return (false, "Unexpected compilation fail. Maybe the output is already being ran?");
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
             WriteToFiles(string.Join(Environment.NewLine, IL), compiled, settings);
-            return new CompilerOutput(true, string.Empty); // Made it.
+            return (true, string.Empty); // Made it.
         }
 
         /// <summary>

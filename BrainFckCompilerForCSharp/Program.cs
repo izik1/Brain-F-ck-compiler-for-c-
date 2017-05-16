@@ -11,8 +11,8 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         private static void Main()
         {
-            CompilerOutput output = Compiler.Compile(UIHandler.GetUserSettings());
-            Console.WriteLine(output.CompileSuccess ? "Compiled!" : output.ErrorText);
+            (bool Success, string ErrorText) output = Compiler.Compile(UIHandler.GetUserSettings());
+            Console.WriteLine(output.Success ? "Compiled!" : output.ErrorText);
             Console.ReadKey(); // to prevent the application from closing.
         }
     }
