@@ -39,24 +39,25 @@ namespace BrainFckCompilerCSharp
                 "using System;public class Program{public static void Main(){byte[] ram=new byte[256];" +
                 GetInjectString(IL) +
                 "Console.ReadKey();}}";
-            CSharpCodeProvider provider = new CSharpCodeProvider();
-            CompilerParameters paramaters = new CompilerParameters
-            {
-                CompilerOptions = "/optimize", // This currently does nothing?
-                GenerateExecutable = true,
-                OutputAssembly = Path.Combine(
-                    appdir,
-                    (settings.FileNameOutputExe != string.Empty ? settings.FileNameOutputExe : "output") + ".exe")
-            };
 
-            CompilerResults results = provider.CompileAssemblyFromSource(paramaters, compiled);
-
-            if (results.Errors.Count > 0)
+            using (CSharpCodeProvider provider = new CSharpCodeProvider())
             {
-                // This *shouldn't* ever happen because all errors *should* be caught by the
-                // validator. The only known instance of this occuring is when the application can't
-                // write to the file.
-                return (false, "Unexpected compilation fail. Maybe the output is already being ran?");
+                CompilerParameters paramaters = new CompilerParameters
+                {
+                    CompilerOptions = "/optimize", // This currently does nothing?
+                    GenerateExecutable = true,
+                    OutputAssembly = Path.Combine(
+                        appdir,
+                        (settings.FileNameOutputExe != string.Empty ? settings.FileNameOutputExe : "output") + ".exe")
+                };
+
+                if (provider.CompileAssemblyFromSource(paramaters, compiled).Errors.Count > 0)
+                {
+                    // This *shouldn't* ever happen because all errors *should* be caught by the
+                    // validator. The only known instance of this occuring is when the application
+                    // can't write to the file.
+                    return (false, "Unexpected compilation fail. Maybe the output is already being ran?");
+                }
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
@@ -96,10 +97,10 @@ namespace BrainFckCompilerCSharp
         /// <summary>
         /// Writes the compiled exe along with the input code (brainf*ck), CSharp source and IL to files.
         /// </summary>
-        /// <param name="IL">The IL as a string. (gets written to IL.txt)</param>
+        /// <param name="IlString">The IL as a string. (gets written to IL.txt)</param>
         /// <param name="outputSrc">The CSharp source code of the output. (gets written to output-src.cs)</param>
         /// <param name="userCode">The code that the user wrote and entered. (gets written to input-code.txt)</param>
-        private static void WriteToFiles(string IL, string outputSrc, CompilerSettings settings)
+        private static void WriteToFiles(string IlString, string outputSrc, CompilerSettings settings)
         {
             if (settings.FileNameUserCode != string.Empty)
             {
@@ -107,7 +108,7 @@ namespace BrainFckCompilerCSharp
             }
             if (settings.FileNameIL != string.Empty)
             {
-                File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"), IL);
+                File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"), IlString);
             }
 
             if (settings.FileNameCSharpSrc != string.Empty)
