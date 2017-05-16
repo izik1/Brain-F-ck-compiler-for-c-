@@ -30,7 +30,7 @@ namespace BrainFckCompilerCSharp
                 EliminateEmptyLoops = GetUserInput("Eliminate Empty loops?"),
                 GetCodeFromFile = getCodeFromFile,
                 EliminateUnreachableLoops = GetUserInput("Eliminate unreachable loops?"),
-                InputCode = GetUserCode(getCodeFromFile)
+                InputCode = getCodeFromFile ? GetUserCodeFromFile() : GetUserCodeFromConsole()
             };
         }
 
@@ -68,27 +68,26 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="FileIO">Is this a file path request or a string input request?</param>
         /// <returns>The users code in the form of a file path or string.</returns>
-        private static string GetUserCode(bool FileIO)
+        private static string GetUserCodeFromConsole()
         {
             Console.Clear();
-            if (FileIO)
+            Console.WriteLine("Put code here, note that it must all be on 1 line.");
+            return Console.ReadLine();
+        }
+
+        private static string GetUserCodeFromFile()
+        {
+            Console.Clear();
+            Console.WriteLine("Put code path here (note: must be a full path to an exact file)");
+            string path = Console.ReadLine();
+            while (!File.Exists(path))
             {
-                Console.WriteLine("Put code path here (note: must be a full path to an exact file)");
-                string path = Console.ReadLine();
-                while (!File.Exists(path))
-                {
-                    Console.Clear();
-                    Console.WriteLine("Invalid path");
-                    path = Console.ReadLine();
-                }
                 Console.Clear();
-                return File.ReadAllText(path);
+                Console.WriteLine("Invalid path");
+                path = Console.ReadLine();
             }
-            else
-            {
-                Console.WriteLine("Put code here, note that it must all be on 1 line.");
-                return Console.ReadLine();
-            }
+            Console.Clear();
+            return File.ReadAllText(path);
         }
     }
 }
