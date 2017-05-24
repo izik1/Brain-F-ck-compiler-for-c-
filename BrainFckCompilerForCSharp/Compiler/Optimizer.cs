@@ -80,7 +80,7 @@ namespace BrainFckCompilerCSharp
         /// <see cref="OpCode.EndLoop"/>.)
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void EliminateEmptyLoops(List<Instruction> IL)
+        internal static void EliminateEmptyLoops(List<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
@@ -98,7 +98,7 @@ namespace BrainFckCompilerCSharp
         /// subtract 4
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void EliminateRedundency(List<Instruction> IL)
+        internal static void EliminateRedundency(List<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
@@ -142,7 +142,7 @@ namespace BrainFckCompilerCSharp
         /// Removes all loops that are unreachable (meaning that no matter what they can't run)
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void EliminateUnreachableLoops(List<Instruction> IL)
+        internal static void EliminateUnreachableLoops(List<Instruction> IL)
         {
             Stack<int> LoopEnds = new Stack<int>();
 
@@ -195,7 +195,7 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
         // This name is stupidly long but at least it is descriptive, still coding at 2:55
-        private static void MergeAssignThenModifyInstructions(List<Instruction> IL)
+        internal static void MergeAssignThenModifyInstructions(List<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
@@ -226,7 +226,7 @@ namespace BrainFckCompilerCSharp
         /// cref="Instruction.Value"/> = 0
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void SimplifyAssignZeroLoops(List<Instruction> IL)
+        internal static void SimplifyAssignZeroLoops(List<Instruction> IL)
         {
             for (int i = IL.Count - 3; i >= 0; i--)
             {
