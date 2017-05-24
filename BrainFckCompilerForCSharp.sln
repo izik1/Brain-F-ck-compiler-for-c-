@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainFckCompilerForCSharp", "BrainFckCompilerForCSharp\BrainFckCompilerForCSharp.csproj", "{A0BFFF6D-E4FC-4CAD-880C-9D7AD3D5868C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainFckCompilerForCSharpTests", "BrainFckCompilerForCSharpTests\BrainFckCompilerForCSharpTests.csproj", "{53E22FCC-D171-432C-AF10-C118A1F2D057}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A0BFFF6D-E4FC-4CAD-880C-9D7AD3D5868C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0BFFF6D-E4FC-4CAD-880C-9D7AD3D5868C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0BFFF6D-E4FC-4CAD-880C-9D7AD3D5868C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

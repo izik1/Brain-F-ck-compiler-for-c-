@@ -3,3 +3,6 @@ BrainFckCompilerForCSharp/bin/
 BrainFckCompilerForCSharp/Brainfook interpreter.csproj.user
 BrainFckCompilerForCSharp/Brainfook interpreter.ruleset
 BrainFckCompilerForCSharp/GlobalSuppressions.cs
+BrainFckCompilerForCSharpTests/bin/
+BrainFckCompilerForCSharpTests/obj/
+packages/

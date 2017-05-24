@@ -63,7 +63,7 @@ namespace BrainFckCompilerCSharp
         /// Eliminate changes to values that get overridden.
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        private static void EliminateDeadStores(List<Instruction> IL)
+        internal static void EliminateDeadStores(List<Instruction> IL)
         {
             for (int i = 1; i < IL.Count; i++)
             {
