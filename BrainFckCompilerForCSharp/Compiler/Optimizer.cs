@@ -65,11 +65,11 @@ namespace BrainFckCompilerCSharp
         /// <param name="IL">The IL code to be optimized.</param>
         private static void EliminateDeadStores(List<Instruction> IL)
         {
-            for (int i = IL.Count - 2; i >= 0; i--)
+            for (int i = 1; i < IL.Count; i++)
             {
-                if (IsDeadStore(IL[i].OpCode, IL[i + 1].OpCode))
+                if (IsDeadStore(IL[i - 1].OpCode, IL[i].OpCode))
                 {
-                    IL[i].Invalidate();
+                    IL[i - 1].Invalidate();
                 }
             }
             IL.RemoveNoOps();
