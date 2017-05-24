@@ -56,18 +56,18 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compiler.cs" />
+    <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HelperFuncs.cs" />
-    <Compile Include="Instruction.cs" />
-    <Compile Include="OpCodes.cs" />
-    <Compile Include="Optimizer.cs" />
-    <Compile Include="ProgramValidator.cs" />
-    <Compile Include="Lexer.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Compiler\Instruction.cs" />
+    <Compile Include="Compiler\OpCodes.cs" />
+    <Compile Include="Compiler\Optimizer.cs" />
+    <Compile Include="Compiler\ProgramValidator.cs" />
+    <Compile Include="Compiler\Lexer.cs" />
+    <Compile Include="UI\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CompilerSettings.cs" />
-    <Compile Include="UIHandler.cs" />
+    <Compile Include="Compiler\CompilerSettings.cs" />
+    <Compile Include="UI\UIHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -85,6 +85,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "$(TargetDir)$(TargetName).dll"</PostBuildEvent>
