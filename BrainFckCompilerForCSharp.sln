@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainFckCompilerForCSharp",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainFckCompilerForCSharpTests", "BrainFckCompilerForCSharpTests\BrainFckCompilerForCSharpTests.csproj", "{53E22FCC-D171-432C-AF10-C118A1F2D057}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrainFckCompilerForCSharpCommandLine", "BrainFckCompilerForCSharpCommandLine\BrainFckCompilerForCSharpCommandLine.csproj", "{9B20B2ED-6E4B-47B7-82AA-F44824CD7EB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{53E22FCC-D171-432C-AF10-C118A1F2D057}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B20B2ED-6E4B-47B7-82AA-F44824CD7EB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B20B2ED-6E4B-47B7-82AA-F44824CD7EB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B20B2ED-6E4B-47B7-82AA-F44824CD7EB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B20B2ED-6E4B-47B7-82AA-F44824CD7EB2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

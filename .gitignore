@@ -1,8 +1,8 @@
-BrainFckCompilerForCSharp/obj/
-BrainFckCompilerForCSharp/bin/
-BrainFckCompilerForCSharp/Brainfook interpreter.csproj.user
-BrainFckCompilerForCSharp/Brainfook interpreter.ruleset
-BrainFckCompilerForCSharp/GlobalSuppressions.cs
-BrainFckCompilerForCSharpTests/bin/
-BrainFckCompilerForCSharpTests/obj/
+*/obj/
+*/bin/
+*/Brainfook interpreter.csproj.user
+*/Brainfook interpreter.ruleset
+*/GlobalSuppressions.cs
+*/bin/
+*/obj/
 packages/
