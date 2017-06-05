@@ -50,12 +50,7 @@ namespace BrainFckCompilerCSharp
         public string FileNameUserCode { get; set; } = "input-code";
 
         /// <summary>
-        /// Should <see cref="InputCode"/> be used as a path or code?
-        /// </summary>
-        public bool GetCodeFromFile { get; set; }
-
-        /// <summary>
-        /// The code/path to the code that the user gave.
+        /// The code that the user gave.
         /// </summary>
         public string InputCode { get; set; }
 

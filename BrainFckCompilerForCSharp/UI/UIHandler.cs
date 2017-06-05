@@ -28,7 +28,6 @@ namespace BrainFckCompilerCSharp
                 MergeAssignThenModifyInstructions = GetUserInput(
                 "Merge assignment instructions with following add/sub instructions?"),
                 EliminateEmptyLoops = GetUserInput("Eliminate Empty loops?"),
-                GetCodeFromFile = getCodeFromFile,
                 EliminateUnreachableLoops = GetUserInput("Eliminate unreachable loops?"),
                 InputCode = getCodeFromFile ? GetUserCodeFromFile() : GetUserCodeFromConsole()
             };
