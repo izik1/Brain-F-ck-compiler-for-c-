@@ -9,8 +9,6 @@ using System.IO;
 
 namespace BrainFckCompilerCSharp
 {
-    /// <summary>
-    /// </summary>
     public static class Compiler
     {
         /// <summary>
@@ -24,16 +22,19 @@ namespace BrainFckCompilerCSharp
             {
                 throw new ArgumentNullException(nameof(settings));
             }
+
             if (settings.InputCode == null)
             {
                 throw new ArgumentException(nameof(settings.InputCode));
             }
+
             List<Instruction> IL = Lexer.Lex(settings.InputCode);
             ErrorCodes ValidationState = ProgramValidator.Validate(IL);
             if (ValidationState != ErrorCodes.Successful)
             {
                 return ValidationState; // Invalid programs can't compile.
             }
+
             Optimizer.Optimize(IL, settings);
             ValidationState = ProgramValidator.Validate(IL);
             if (ValidationState != ErrorCodes.Successful)
@@ -56,7 +57,7 @@ namespace BrainFckCompilerCSharp
                     GenerateExecutable = true,
                     OutputAssembly = Path.Combine(
                         appdir,
-                        (!string.IsNullOrEmpty(settings.FileNameOutputExe)
+                        ((!string.IsNullOrEmpty(settings.FileNameOutputExe))
                         ? settings.FileNameOutputExe : "output") + ".exe")
                 };
 
@@ -84,7 +85,7 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IL">The code to transpile to CSharp</param>
         /// <returns></returns>
-        private static string GetInjectString(List<Instruction> IL)
+        private static string GetInjectString(IList<Instruction> IL)
         {
             StringBuilder inject = new StringBuilder(10 * IL.Count);
 
@@ -92,14 +93,14 @@ namespace BrainFckCompilerCSharp
             // subtract from the pointer because if it is a little bit of micro optimization can be
             // made by just assigning it flat out.
             bool skipFirst = IL[0].OpCode == OpCode.AddPtr || IL[0].OpCode == OpCode.SubPtr;
-            inject.Append(skipFirst ?
-                $"byte ptr{(IL[0].OpCode == OpCode.AddPtr ? IL[0].Value : (byte)(255 - IL[0].Value))};" :
-                "byte ptr=0;");
+            inject.Append((skipFirst) ? "byte ptr" +
+                (((IL[0].OpCode == OpCode.AddPtr) ? IL[0].Value : (byte)(255 - IL[0].Value)).ToString()) + ";" : "byte ptr=0;");
 
-            for (int i = skipFirst ? 1 : 0; i < IL.Count; i++)
+            for (int i = (skipFirst) ? 1 : 0; i < IL.Count; i++)
             {
                 inject.Append(IL[i].ToString(true));
             }
+
             return inject.ToString();
         }
 
@@ -108,13 +109,14 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IlString">The IL as a string. (gets written to IL.txt)</param>
         /// <param name="outputSrc">The CSharp source code of the output. (gets written to output-src.cs)</param>
-        /// <param name="userCode">The code that the user wrote and entered. (gets written to input-code.txt)</param>
+        /// <param name="settings">The settings.</param>
         private static void WriteToFiles(string IlString, string outputSrc, CompilerSettings settings)
         {
             if (!string.IsNullOrEmpty(settings.FileNameUserCode))
             {
                 File.WriteAllText(Path.Combine(appdir, settings.FileNameUserCode + ".txt"), settings.InputCode);
             }
+
             if (!string.IsNullOrEmpty(settings.FileNameIL))
             {
                 File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"), IlString);

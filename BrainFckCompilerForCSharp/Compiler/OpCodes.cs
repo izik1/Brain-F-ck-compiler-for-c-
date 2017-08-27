@@ -28,7 +28,7 @@ namespace BrainFckCompilerCSharp
         AddPtr,
 
         /// <summary>
-        /// Subtracts <see cref="Instruction.Value"/> to the current pointer.
+        /// Subtracts <see cref="Instruction.Value"/> from the current pointer.
         /// </summary>
         SubPtr,
 

@@ -4,8 +4,6 @@ using System;
 
 namespace BrainFckCompilerCSharp
 {
-    /// <summary>
-    /// </summary>
     public class Instruction
     {
         /// <summary>
@@ -19,11 +17,10 @@ namespace BrainFckCompilerCSharp
         public byte Value { get; set; }
 
         /// <summary>
-        /// Creates a new instruction with <see cref="OpCode"/> = <paramref name="opCode"/> and <see
-        /// cref="Value"/> = <paramref name="value"/>
+        /// Initializes a new instance of the <see cref="Instruction"/> class.
         /// </summary>
-        /// <param name="opCode">The <see cref="BrainFckCompilerCS.OpCode"/> of the new instruction</param>
-        /// <param name="value">the value of the new instruction.</param>
+        /// <param name="opCode">The op code.</param>
+        /// <param name="value">The value.</param>
         public Instruction(OpCode opCode, byte value)
         {
             this.OpCode = opCode;
@@ -55,36 +52,38 @@ namespace BrainFckCompilerCSharp
         /// Creates a new string that represents this <see cref="Instruction"/> in the format {OPCODE
         /// as hex}: {VALUE as hex}
         /// </summary>
-        /// <returns><c>string.Format("{0:X}: {1:X2}", this.OpCode, this.Value)</c></returns>
-        public override string ToString() => string.Format("{0:X}: {1:X2}", this.OpCode, this.Value);
+        /// <returns><c>$"{this.OpCode:X}: {this.Value:X2}"</c></returns>
+        public override string ToString() => $"{this.OpCode:X}: {this.Value:X2}";
 
         /// <summary>
         /// Creates a new string that represents this <see cref="Instruction"/>
         /// </summary>
         /// <param name="isCSharpString">Should this be outputted as CSharp code?</param>
         /// <returns>A string that represents this <see cref="Instruction"/></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public string ToString(bool isCSharpString)
         {
             if (!isCSharpString)
             {
                 return ToString();
             }
+
             switch (this.OpCode)
             {
                 case OpCode.NoOp:
                     return "";
 
                 case OpCode.AddVal:
-                    return $"ram[ptr]+={this.Value};";
+                    return "ram[ptr]+=" + this.Value.ToString() + ";";
 
                 case OpCode.SubVal:
-                    return $"ram[ptr]-={this.Value};";
+                    return "ram[ptr]-=" + this.Value.ToString() + ";";
 
                 case OpCode.AddPtr:
-                    return $"ptr+={this.Value};";
+                    return "ptr+=" + this.Value.ToString() + ";";
 
                 case OpCode.SubPtr:
-                    return $"ptr-={this.Value};";
+                    return "ptr-=" + this.Value.ToString() + ";";
 
                 case OpCode.GetInput:
                     return "ram[ptr]=byte.Parse(Console.ReadLine());";
@@ -99,9 +98,9 @@ namespace BrainFckCompilerCSharp
                     return "}";
 
                 case OpCode.AssignVal:
-                    return $"ram[ptr]={this.Value};";
+                    return "ram[ptr]=" + this.Value.ToString() + ";";
                 default:
-                    throw new InvalidOperationException("Unexpected OpCode" + this.OpCode);
+                    throw new InvalidOperationException("Unexpected OpCode" + this.OpCode.ToString());
             }
         }
     }

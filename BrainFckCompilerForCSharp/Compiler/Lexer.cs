@@ -22,6 +22,7 @@ namespace BrainFckCompilerCSharp
             {
                 throw new ArgumentNullException(nameof(code));
             }
+
             if (code.Length == 0)
             {
                 throw new ArgumentException("code must have a non-zero length", nameof(code));
@@ -46,6 +47,7 @@ namespace BrainFckCompilerCSharp
                     count = 1;
                 }
             }
+
             IL.Add(prev.ToIL(count)); // The loop misses the last item so this is the cleanest way to get it.
             IL.RemoveNoOps();
             IL.TrimExcess();
@@ -68,6 +70,7 @@ namespace BrainFckCompilerCSharp
                     sb.Append(c);
                 }
             }
+
             return sb.ToString();
         }
     }

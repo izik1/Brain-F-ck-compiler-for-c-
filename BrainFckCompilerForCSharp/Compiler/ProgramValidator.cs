@@ -5,8 +5,6 @@ using System.Linq;
 
 namespace BrainFckCompilerCSharp
 {
-    /// <summary>
-    /// </summary>
     internal static class ProgramValidator
     {
         /// <summary>
@@ -20,14 +18,17 @@ namespace BrainFckCompilerCSharp
             {
                 return ErrorCodes.NullProgram;
             }
+
             if (!LoopsBalanced(IL))
             {
                 return ErrorCodes.ProgramContainsUnbalancedLoop;
             }
+
             if (!ValidLoops(IL))
             {
                 return ErrorCodes.ProgramContainsInvalidLoop;
             }
+
             return ErrorCodes.Successful;
         }
 
@@ -42,6 +43,7 @@ namespace BrainFckCompilerCSharp
             {
                 return false;
             }
+
             int counter = 0;
             for (int i = 0; i < IL.Count; i++)
             {
@@ -62,6 +64,7 @@ namespace BrainFckCompilerCSharp
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -70,7 +73,7 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IL"></param>
         /// <returns></returns>
-        private static bool ValidLoops(List<Instruction> IL)
+        private static bool ValidLoops(IList<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
@@ -79,6 +82,7 @@ namespace BrainFckCompilerCSharp
                     return false;
                 }
             }
+
             return true;
         }
     }

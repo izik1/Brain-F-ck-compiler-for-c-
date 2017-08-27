@@ -28,14 +28,17 @@ namespace BrainFckCompilerCSharp
                 {
                     EliminateRedundency(IL);
                 }
+
                 if (settings.SimplifyAssignZeroLoops)
                 {
                     SimplifyAssignZeroLoops(IL);
                 }
+
                 if (settings.EliminateEmptyLoops)
                 {
                     EliminateEmptyLoops(IL);
                 }
+
                 if (settings.EliminateUnreachableLoops)
                 {
                     EliminateUnreachableLoops(IL);
@@ -72,6 +75,7 @@ namespace BrainFckCompilerCSharp
                     IL[i - 1].Invalidate();
                 }
             }
+
             IL.RemoveNoOps();
         }
 
@@ -90,6 +94,7 @@ namespace BrainFckCompilerCSharp
                     IL[i].Invalidate();
                 }
             }
+
             IL.RemoveNoOps();
         }
 
@@ -135,6 +140,7 @@ namespace BrainFckCompilerCSharp
                     }
                 }
             }
+
             IL.RemoveNoOps();
         }
 
@@ -149,8 +155,8 @@ namespace BrainFckCompilerCSharp
             // Not sure if this local function should exist.
             bool DetectUnreachableLoops(int current)
             {
-                return (IL[current + 1].OpCode == OpCode.StartLoop &&
-                    (IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0 || current == 0));
+                return IL[current + 1].OpCode == OpCode.StartLoop &&
+                    ((IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0) || current == 0);
             }
             for (int i = IL.Count - 1; i >= 0; i--)
             {
@@ -173,6 +179,7 @@ namespace BrainFckCompilerCSharp
                     // Do nothing.
                 }
             }
+
             IL.RemoveNoOps();
         }
 
@@ -215,22 +222,21 @@ namespace BrainFckCompilerCSharp
                     }
                 }
             }
+
             IL.RemoveNoOps();
         }
 
         /// <summary>
-        /// Replaces all loops that assign 0 with a <see cref="Instruction"/> that has <see
-        /// cref="Instruction.OpCode"/> = <see cref="OpCode.AssignVal"/> and <see
-        /// cref="Instruction.Value"/> = 0
+        /// Simplifies loops that assign a value to zero.
         /// </summary>
-        /// <param name="IL">The IL code to be optimized.</param>
+        /// <param name="IL">The il.</param>
         internal static void SimplifyAssignZeroLoops(List<Instruction> IL)
         {
             for (int i = IL.Count - 3; i >= 0; i--)
             {
                 if (HelperFuncs.IsIlLoop(IL[i].OpCode, IL[i + 2].OpCode))
                 {
-                    if ((IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0))
+                    if (IL[i + 1].OpCode == OpCode.AssignVal && IL[i + 1].Value == 0)
                     {
                         IL[i + 0].Invalidate();
                         IL[i + 2].Invalidate();
@@ -249,6 +255,7 @@ namespace BrainFckCompilerCSharp
                     }
                 }
             }
+
             IL.RemoveNoOps();
         }
     }
