@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Text;
+using System;
 
 namespace BrainFckCompilerCSharp
 {
@@ -17,8 +18,17 @@ namespace BrainFckCompilerCSharp
         /// <returns>Code as an ordered list of <see cref="Instruction"/>.</returns>
         public static List<Instruction> Lex(string code)
         {
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+            if (code.Length == 0)
+            {
+                throw new ArgumentException("code must have a non-zero length", nameof(code));
+            }
+
             string filteredCode = FilterComments(code);
-            List<Instruction> IL = new List<Instruction>();
+            List<Instruction> IL = new List<Instruction>(filteredCode.Length);
             char prev = filteredCode[0];
             byte count = 1;
             for (int i = 1; i < filteredCode.Length; i++)
@@ -38,6 +48,7 @@ namespace BrainFckCompilerCSharp
             }
             IL.Add(prev.ToIL(count)); // The loop misses the last item so this is the cleanest way to get it.
             IL.RemoveNoOps();
+            IL.TrimExcess();
             return IL;
         }
 

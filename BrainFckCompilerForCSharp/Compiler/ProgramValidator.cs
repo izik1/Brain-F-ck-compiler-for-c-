@@ -14,21 +14,21 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="IL"></param>
         /// <returns></returns>
-        internal static (bool ValidProgram, string OutputText) Validate(List<Instruction> IL)
+        internal static ErrorCodes Validate(List<Instruction> IL)
         {
             if (IL.Count == 0)
             {
-                return (false, "Null program");
+                return ErrorCodes.NullProgram;
             }
             if (!LoopsBalanced(IL))
             {
-                return (false, "Loops aren't balanced ( [[] ) or maybe loops are out of order ( ][ ) ");
+                return ErrorCodes.ProgramContainsUnbalancedLoop;
             }
             if (!ValidLoops(IL))
             {
-                return (false, "You have an infinite loop somewhere.");
+                return ErrorCodes.ProgramContainsInvalidLoop;
             }
-            return (true, "Valid program");
+            return ErrorCodes.Successful;
         }
 
         /// <summary>

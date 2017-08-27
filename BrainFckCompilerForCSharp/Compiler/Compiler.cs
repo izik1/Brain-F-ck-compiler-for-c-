@@ -18,19 +18,27 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="settings"></param>
         /// <returns>The success of the compilation.</returns>
-        public static (bool Success, string ErrorText) Compile(CompilerSettings settings)
+        public static ErrorCodes Compile(CompilerSettings settings)
         {
-            List<Instruction> IL = Lexer.Lex(settings.InputCode);
-            (bool ValidProgram, string OutputText) ValidationState = ProgramValidator.Validate(IL);
-            if (!ValidationState.ValidProgram)
+            if (settings == null)
             {
-                return (false, ValidationState.OutputText + " (pre optimization)"); // Invalid programs can't compile.
+                throw new ArgumentNullException(nameof(settings));
+            }
+            if (settings.InputCode == null)
+            {
+                throw new ArgumentException(nameof(settings.InputCode));
+            }
+            List<Instruction> IL = Lexer.Lex(settings.InputCode);
+            ErrorCodes ValidationState = ProgramValidator.Validate(IL);
+            if (ValidationState != ErrorCodes.Successful)
+            {
+                return ValidationState; // Invalid programs can't compile.
             }
             Optimizer.Optimize(IL, settings);
             ValidationState = ProgramValidator.Validate(IL);
-            if (!ValidationState.ValidProgram)
+            if (ValidationState != ErrorCodes.Successful)
             {
-                return (false, ValidationState.OutputText + " (post optimization)"); // Optimizations broke the code.
+                return ValidationState; // Optimizations broke the code.
             }
 
             // Why is this using a constant string? because a better way to do this hasn't been
@@ -48,7 +56,8 @@ namespace BrainFckCompilerCSharp
                     GenerateExecutable = true,
                     OutputAssembly = Path.Combine(
                         appdir,
-                        (settings.FileNameOutputExe != string.Empty ? settings.FileNameOutputExe : "output") + ".exe")
+                        (!string.IsNullOrEmpty(settings.FileNameOutputExe)
+                        ? settings.FileNameOutputExe : "output") + ".exe")
                 };
 
                 if (provider.CompileAssemblyFromSource(paramaters, compiled).Errors.Count > 0)
@@ -56,13 +65,13 @@ namespace BrainFckCompilerCSharp
                     // This *shouldn't* ever happen because all errors *should* be caught by the
                     // validator. The only known instance of this occuring is when the application
                     // can't write to the file.
-                    return (false, "Unexpected compilation fail. Maybe the output is already being ran?");
+                    return ErrorCodes.UnknownCompilationFailure;
                 }
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
             WriteToFiles(string.Join(Environment.NewLine, IL), compiled, settings);
-            return (true, string.Empty); // Made it.
+            return ErrorCodes.Successful; // Made it.
         }
 
         /// <summary>
@@ -77,7 +86,7 @@ namespace BrainFckCompilerCSharp
         /// <returns></returns>
         private static string GetInjectString(List<Instruction> IL)
         {
-            StringBuilder inject = new StringBuilder();
+            StringBuilder inject = new StringBuilder(10 * IL.Count);
 
             // these few lines are for checking to see if the first instruction would be to add to /
             // subtract from the pointer because if it is a little bit of micro optimization can be
@@ -102,16 +111,16 @@ namespace BrainFckCompilerCSharp
         /// <param name="userCode">The code that the user wrote and entered. (gets written to input-code.txt)</param>
         private static void WriteToFiles(string IlString, string outputSrc, CompilerSettings settings)
         {
-            if (settings.FileNameUserCode != string.Empty)
+            if (!string.IsNullOrEmpty(settings.FileNameUserCode))
             {
                 File.WriteAllText(Path.Combine(appdir, settings.FileNameUserCode + ".txt"), settings.InputCode);
             }
-            if (settings.FileNameIL != string.Empty)
+            if (!string.IsNullOrEmpty(settings.FileNameIL))
             {
                 File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"), IlString);
             }
 
-            if (settings.FileNameCSharpSrc != string.Empty)
+            if (!string.IsNullOrEmpty(settings.FileNameCSharpSrc))
             {
                 File.WriteAllText(Path.Combine(appdir, settings.FileNameCSharpSrc + ".cs"), outputSrc);
             }

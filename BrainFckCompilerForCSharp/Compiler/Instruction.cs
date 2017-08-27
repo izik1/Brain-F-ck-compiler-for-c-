@@ -56,10 +56,7 @@ namespace BrainFckCompilerCSharp
         /// as hex}: {VALUE as hex}
         /// </summary>
         /// <returns><c>string.Format("{0:X}: {1:X2}", this.OpCode, this.Value)</c></returns>
-        public override string ToString()
-        {
-            return string.Format("{0:X}: {1:X2}", this.OpCode, this.Value);
-        }
+        public override string ToString() => string.Format("{0:X}: {1:X2}", this.OpCode, this.Value);
 
         /// <summary>
         /// Creates a new string that represents this <see cref="Instruction"/>

@@ -13,10 +13,7 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="code">The code to check.</param>
         /// <returns><c>true</c> if <paramref name="code"/> Assigns a value <c>false otherwise</c></returns>
-        public static bool AssignsValue(this OpCode code)
-        {
-            return code == OpCode.GetInput || code == OpCode.AssignVal;
-        }
+        public static bool AssignsValue(this OpCode code) => code == OpCode.GetInput || code == OpCode.AssignVal;
 
         /// <summary>
         /// Gets the reverse <see cref="OpCode"/> of <paramref name="code"/>
@@ -51,20 +48,15 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="code">The code to check.</param>
         /// <returns><c>true</c> if <paramref name="code"/> is reverseable <c>false otherwise</c></returns>
-        public static bool IsReversable(this OpCode code)
-        {
-            return code == OpCode.AddVal || code == OpCode.SubVal || code == OpCode.AddPtr || code == OpCode.SubPtr;
-        }
+        public static bool IsReversable(this OpCode code) =>
+            code == OpCode.AddVal || code == OpCode.SubVal || code == OpCode.AddPtr || code == OpCode.SubPtr;
 
         /// <summary>
         /// Checks if <paramref name="code"/> Modifies a value.
         /// </summary>
         /// <param name="code">The code to check.</param>
         /// <returns><c>true</c> if <paramref name="code"/> Modifies a value <c>false otherwise</c></returns>
-        public static bool ModifiesValue(this OpCode code)
-        {
-            return code == OpCode.AddVal || code == OpCode.SubVal;
-        }
+        public static bool ModifiesValue(this OpCode code) => code == OpCode.AddVal || code == OpCode.SubVal;
 
         /// <summary>
         /// Removes all <see cref="Instruction"/> with the opcode <see cref="OpCode.NoOp"/> in
@@ -132,9 +124,6 @@ namespace BrainFckCompilerCSharp
         /// <returns>
         /// True if <paramref name="start"/> and <paramref name="end"/> form a loop, false otherwise.
         /// </returns>
-        internal static bool IsIlLoop(OpCode start, OpCode end)
-        {
-            return start == OpCode.StartLoop && end == OpCode.EndLoop;
-        }
+        internal static bool IsIlLoop(OpCode start, OpCode end) => start == OpCode.StartLoop && end == OpCode.EndLoop;
     }
 }

@@ -44,8 +44,8 @@ namespace BrainFckCompilerCSharp
         public string FileNameOutputExe { get; set; } = "output";
 
         /// <summary>
-        /// File name of the Users inputted code, if put as an empty string, no file will be
-        /// outputted. DO NOT give a path and DO NOT give an extension (unless a second extension is good)
+        /// The file name for a duplicate of the users code, if empty, no file will be outputted
+        /// (adds own extension, this is a name without an extension)
         /// </summary>
         public string FileNameUserCode { get; set; } = "input-code";
 

@@ -184,10 +184,8 @@ namespace BrainFckCompilerCSharp
         /// <returns>
         /// True if <paramref name="current"/> gets overridden by <paramref name="next"/>, false otherwise.
         /// </returns>
-        private static bool IsDeadStore(OpCode current, OpCode next)
-        {
-            return next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
-        }
+        private static bool IsDeadStore(OpCode current, OpCode next) =>
+            next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
 
         /// <summary>
         /// Merges all <see cref="Instruction"/> that have <see cref="OpCode.AssignVal"/> with ones
