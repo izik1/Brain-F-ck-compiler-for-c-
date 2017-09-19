@@ -7,10 +7,10 @@ namespace BrainFckCompilerCSharp
     public enum OpCode
     {
         /// <summary>
-        /// No Op stands for No Operation, no code is ran with these, but it's useful to mark
+        /// Nop stands for No Operation, no code is ran with these, but it's useful to mark
         /// instructions to be removed. Set to zero for semantics.
         /// </summary>
-        NoOp = 0,
+        Nop = 0,
 
         /// <summary>
         /// Adds <see cref="Instruction.Value"/> to the value at the current pointer.
@@ -58,8 +58,15 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         AssignVal,
 
+        /// <summary>
+        /// Marks a loop, used in the AST.
+        /// </summary>
         Loop,
 
+        /// <summary>
+        /// Sets the value at pointer to zero, different from <see cref="AssignVal"/> in that the
+        /// value can *only* be zero.
+        /// </summary>
         AssignZero,
     }
 }

@@ -20,7 +20,7 @@ namespace BrainFckCompilerCSharp
         /// <summary>
         /// Should the Compiler eliminate redundent code? (code that counters itself like +-)
         /// </summary>
-        public bool EliminateRedundentCode { get; set; }
+        public bool CombineMatchingInstructions { get; set; }
 
         public bool EliminateUnreachableLoops { get; set; }
 
@@ -64,5 +64,7 @@ namespace BrainFckCompilerCSharp
         /// Should loops that assign the value at the current pointer to zero be simplified?
         /// </summary>
         public bool SimplifyAssignZeroLoops { get; set; } // Basically loops that set the value at the current pointer to 0.
+
+        public bool EliminateConflictingInstructions { get; set; }
     }
 }

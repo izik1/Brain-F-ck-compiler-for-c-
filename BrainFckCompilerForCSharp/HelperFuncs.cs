@@ -1,5 +1,6 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 using System.Collections.Generic;
+using System;
 
 namespace BrainFckCompilerCSharp
 {
@@ -20,9 +21,9 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         /// <param name="code">The <see cref="OpCode"/> to get the reverse of.</param>
         /// <returns>
-        /// the reverse <see cref="OpCode"/> of <paramref name="code"/> if it exists otherwise <see cref="OpCode.NoOp"/>
+        /// the reverse <see cref="OpCode"/> of <paramref name="code"/> if it exists otherwise <see cref="OpCode.Nop"/>
         /// </returns>
-        public static OpCode GetReversedCode(this OpCode code)
+        public static OpCode GetReversedOpCode(this OpCode code)
         {
             switch (code)
             {
@@ -39,7 +40,7 @@ namespace BrainFckCompilerCSharp
                     return OpCode.AddPtr;
 
                 default:
-                    return OpCode.NoOp;
+                    return OpCode.Nop;
             }
         }
 
@@ -59,15 +60,15 @@ namespace BrainFckCompilerCSharp
         public static bool ModifiesValue(this OpCode code) => code == OpCode.AddVal || code == OpCode.SubVal;
 
         /// <summary>
-        /// Removes all <see cref="Instruction"/> with the opcode <see cref="OpCode.NoOp"/> in
+        /// Removes all <see cref="Instruction"/> with the opcode <see cref="OpCode.Nop"/> in
         /// <paramref name="list"/>
         /// </summary>
         /// <param name="list">A list of instructions, probably for being compiled...</param>
-        public static void RemoveNoOps(this List<Instruction> list)
+        public static void RemoveNops(this List<Instruction> list)
         {
             for (int i = list.Count - 1; i >= 0; i--)
             {
-                if (list[i].OpCode == OpCode.NoOp)
+                if (list[i].OpCode == OpCode.Nop)
                 {
                     list.RemoveAt(i);
                 }
@@ -83,21 +84,23 @@ namespace BrainFckCompilerCSharp
         /// the <see cref="Instruction.Value"/> of the generated instruction if it needs it.
         /// </param>
         /// <returns>c as a new <see cref="Instruction"/>.</returns>
+        [Obsolete("This and all related methods have been replaced by an Abstract Syntax Tree, " +
+            "and will be removed in a future version.")]
         public static Instruction ToIL(this char c, byte value)
         {
             switch (c)
             {
                 case '+':
-                    return new Instruction((value > 0) ? OpCode.AddVal : OpCode.NoOp, value);
+                    return new Instruction((value > 0) ? OpCode.AddVal : OpCode.Nop, value);
 
                 case '-':
-                    return new Instruction((value > 0) ? OpCode.SubVal : OpCode.NoOp, value);
+                    return new Instruction((value > 0) ? OpCode.SubVal : OpCode.Nop, value);
 
                 case '>':
-                    return new Instruction((value > 0) ? OpCode.AddPtr : OpCode.NoOp, value);
+                    return new Instruction((value > 0) ? OpCode.AddPtr : OpCode.Nop, value);
 
                 case '<':
-                    return new Instruction((value > 0) ? OpCode.SubPtr : OpCode.NoOp, value);
+                    return new Instruction((value > 0) ? OpCode.SubPtr : OpCode.Nop, value);
 
                 case ',':
                     return new Instruction(OpCode.GetInput, 0);
@@ -112,7 +115,7 @@ namespace BrainFckCompilerCSharp
                     return new Instruction(OpCode.EndLoop, 0);
 
                 default:
-                    return new Instruction(OpCode.NoOp);
+                    return new Instruction(OpCode.Nop);
             }
         }
 

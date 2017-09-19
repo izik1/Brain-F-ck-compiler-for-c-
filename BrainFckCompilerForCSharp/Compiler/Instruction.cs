@@ -39,12 +39,12 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
-        /// Sets this instruction to a NoOp. Also sets the value to zero, even though that doesn't
+        /// Sets this instruction to a Nop. Also sets the value to zero, even though that doesn't
         /// really matter.
         /// </summary>
         public void Invalidate()
         {
-            this.OpCode = OpCode.NoOp;
+            this.OpCode = OpCode.Nop;
             this.Value = 0;
         }
 
@@ -70,7 +70,7 @@ namespace BrainFckCompilerCSharp
 
             switch (this.OpCode)
             {
-                case OpCode.NoOp:
+                case OpCode.Nop:
                     return "";
 
                 case OpCode.AddVal:

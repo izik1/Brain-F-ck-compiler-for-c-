@@ -33,7 +33,7 @@ namespace BrainFckCompilerCSharp
                 throw new ArgumentException(nameof(settings.InputCode));
             }
 
-            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileIl(settings);
+            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileAst(settings);
             if (preCompResults.errorCode != ErrorCodes.Successful)
             {
                 return preCompResults.errorCode;
@@ -69,36 +69,24 @@ namespace BrainFckCompilerCSharp
 
             // create a string which contains all the IL on new lines & pass the other args.
             WriteToFiles(string.Join(Environment.NewLine, preCompResults.Il), compiled, settings);
-            List<Instruction> tmp = CompileAst(settings).Ast.ToIl();
-            tmp.RemoveNoOps();
+            List<Instruction> tmp = CompileAst(settings).Il;
+            tmp.RemoveNops();
             Console.WriteLine(string.Join(Environment.NewLine, tmp));
             return ErrorCodes.Successful; // Made it.
         }
 
-        private static (ErrorCodes errorCode, AbstractSyntaxTree Ast) CompileAst(CompilerSettings settings)
+        /// <summary>
+        /// Converts given user code into a IL program which can then be compiled.
+        /// </summary>
+        /// <param name="settings">The settings.</param>
+        /// <returns></returns>
+        public static (ErrorCodes errorCode, List<Instruction> Il) CompileAst(CompilerSettings settings)
         {
             AbstractSyntaxTree tree = Lexer.LexAst(settings.InputCode);
             Optimizer.Optimize(tree, settings);
-            return (ErrorCodes.Successful, tree);
-        }
-
-        private static (ErrorCodes errorCode, List<Instruction> Il) CompileIl(CompilerSettings settings)
-        {
-            List<Instruction> IL = Lexer.Lex(settings.InputCode);
-            ErrorCodes ValidationState = ProgramValidator.Validate(IL);
-            if (ValidationState != ErrorCodes.Successful)
-            {
-                return (ValidationState, null); // Invalid programs can't compile.
-            }
-
-            Optimizer.Optimize(IL, settings);
-            ValidationState = ProgramValidator.Validate(IL);
-            if (ValidationState != ErrorCodes.Successful)
-            {
-                return (ValidationState, null); // Optimizations broke the code.
-            }
-
-            return (ErrorCodes.Successful, IL);
+            List<Instruction> Il = tree.ToIl();
+            Optimizer.Optimize(Il, settings);
+            return (ErrorCodes.Successful, Il);
         }
 
         /// <summary>
@@ -109,6 +97,10 @@ namespace BrainFckCompilerCSharp
         private static string GetInjectString(IList<Instruction> IL)
         {
             StringBuilder inject = new StringBuilder(10 * IL.Count);
+            if (IL.Count == 0)
+            {
+                return "";
+            }
 
             // these few lines are for checking to see if the first instruction would be to add to /
             // subtract from the pointer because if it is a little bit of micro optimization can be

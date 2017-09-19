@@ -3,45 +3,47 @@ using System.Collections.Generic;
 
 namespace BrainFckCompilerCSharp
 {
-    internal sealed class AbstractSyntaxTree : IEnumerable<AbstractSyntaxTree>
+    public sealed class AbstractSyntaxTree : IEnumerable<AbstractSyntaxTree>
     {
-        internal OpCode Op;
+        public OpCode Op { get; set; }
 
         public AbstractSyntaxTree(OpCode opcode) => this.Op = opcode;
 
-        public int Count => this.childNodes.Count;
+        public int Count => this.ChildNodes.Count;
 
-        internal List<AbstractSyntaxTree> childNodes { get; private set; } = new List<AbstractSyntaxTree>();
+        public List<AbstractSyntaxTree> ChildNodes { get; private set; } = new List<AbstractSyntaxTree>();
 
         public AbstractSyntaxTree this[int index]
         {
-            get => childNodes[index];
+            get => ChildNodes[index];
         }
 
-        public void Add(AbstractSyntaxTree item) => this.childNodes.Add(item);
+        public void Add(AbstractSyntaxTree item) => this.ChildNodes.Add(item);
 
-        public void Clear() => this.childNodes.Clear();
+        public void Clear() => this.ChildNodes.Clear();
 
-        public void ColapseNops()
+        public void ColapseNops() => ColapseNops(true);
+
+        private void ColapseNops(bool trueRoot)
         {
-            foreach (AbstractSyntaxTree item in this.childNodes)
+            foreach (AbstractSyntaxTree item in this.ChildNodes)
             {
-                item.ColapseNops();
+                item.ColapseNops(false);
             }
 
-            if (this.childNodes.Count == 1 && this.Op == OpCode.NoOp)
+            if (!trueRoot && this.ChildNodes.Count == 1 && this.Op == OpCode.Nop)
             {
-                this.Op = this.childNodes[0].Op;
+                this.Op = this.ChildNodes[0].Op;
 
                 // This batmans the child node and this node's childNode list, but not the child
                 // node's subtree.
-                this.childNodes = this.childNodes[0].childNodes;
+                this.ChildNodes = this.ChildNodes[0].ChildNodes;
             }
         }
 
         public IEnumerator<AbstractSyntaxTree> GetEnumerator()
         {
-            foreach (AbstractSyntaxTree item in this.childNodes)
+            foreach (AbstractSyntaxTree item in this.ChildNodes)
             {
                 yield return item;
             }
@@ -49,14 +51,22 @@ namespace BrainFckCompilerCSharp
             yield return this;
         }
 
+        public bool AllChildrenAssignZero => this.ChildNodes.TrueForAll(ast => ast.Op == OpCode.AssignZero);
+
+        public bool AllChildrenIncVal => this.ChildNodes.TrueForAll(ast => ast.Op == OpCode.AddVal);
+
+        public bool AllChildrenDecVal => this.ChildNodes.TrueForAll(ast => ast.Op == OpCode.SubVal);
+
+        public void RemoveAt(int index) => this.ChildNodes.RemoveAt(index);
+
         public List<Instruction> ToIl()
         {
-            List<Instruction> il = new List<Instruction>();
+            List<Instruction> il = new List<Instruction>(this.ChildNodes.Count);
             ToIl(il);
             return il;
         }
 
-        internal void Remove(AbstractSyntaxTree ast) => this.childNodes.Remove(ast);
+        public void Remove(AbstractSyntaxTree ast) => this.ChildNodes.Remove(ast);
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -65,7 +75,7 @@ namespace BrainFckCompilerCSharp
             if (this.Op == OpCode.Loop)
             {
                 il.Add(new Instruction(OpCode.StartLoop));
-                foreach (AbstractSyntaxTree item in this.childNodes)
+                foreach (AbstractSyntaxTree item in this.ChildNodes)
                 {
                     item.ToIl(il);
                 }
@@ -74,10 +84,10 @@ namespace BrainFckCompilerCSharp
             }
             else
             {
-                il.Add(new Instruction(this.Op));
-                if (this.Op == OpCode.NoOp)
+                il.Add(this.Op == OpCode.AssignZero ? new Instruction(OpCode.AssignVal, 0) : new Instruction(this.Op));
+                if (this.Op == OpCode.Nop)
                 {
-                    foreach (AbstractSyntaxTree item in this.childNodes)
+                    foreach (AbstractSyntaxTree item in this.ChildNodes)
                     {
                         item.ToIl(il);
                     }

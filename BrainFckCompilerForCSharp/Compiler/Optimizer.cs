@@ -1,5 +1,6 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BrainFckCompilerCSharp
 {
@@ -22,7 +23,7 @@ namespace BrainFckCompilerCSharp
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
         }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace BrainFckCompilerCSharp
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
         }
 
         /// <summary>
@@ -49,45 +50,20 @@ namespace BrainFckCompilerCSharp
         /// subtract 4
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
-        internal static void EliminateRedundency(List<Instruction> IL)
+        private static void CombineMatchingInstructions(List<Instruction> IL)
         {
             for (int i = IL.Count - 2; i >= 0; i--)
             {
-                if (IL[i].OpCode.IsReversable()) // The following if and else if both would check for this.
+                if (IL[i].OpCode.IsReversable() && IL[i + 1].OpCode == IL[i].OpCode)
                 {
-                    if (IL[i + 1].OpCode == IL[i].OpCode)
-                    {
-                        // Combine the two instructions and Invalidate the 2nd one because it gets
-                        // removed faster when List.Remove is called.
-                        IL[i].Value += IL[i + 1].Value;
-                        IL[i + 1].Invalidate();
-                    }
-                    else if (IL[i + 1].OpCode == IL[i].OpCode.GetReversedCode())
-                    {
-                        if (IL[i + 1].Value > IL[i].Value)
-                        {
-                            IL[i + 1].Value -= IL[i].Value;
-                            IL[i].Invalidate();
-                        }
-                        else if (IL[i + 1].Value < IL[i].Value)
-                        {
-                            IL[i].Value -= IL[i + 1].Value;
-                            IL[i + 1].Invalidate();
-                        }
-                        else
-                        {
-                            IL[i].Invalidate();
-                            IL[i + 1].Invalidate();
-                        }
-                    }
-                    else
-                    {
-                        // Do nothing as this is a normal case but nothing needs to be done.
-                    }
+                    // Combine the two instructions and Invalidate the 2nd one because it gets
+                    // removed faster when List.Remove is called.
+                    IL[i].Value += IL[i + 1].Value;
+                    IL[i + 1].Invalidate();
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
         }
 
         /// <summary>
@@ -126,7 +102,39 @@ namespace BrainFckCompilerCSharp
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
+        }
+
+        private static bool EliminateUnreachableLoops(AbstractSyntaxTree root, bool trueRoot)
+        {
+            bool RetVal = false;
+            for (int i = 1; i < root.Count; i++)
+            {
+                RetVal |= EliminateUnreachableLoops(root[i], false);
+                if (root[i].Op == OpCode.Loop && (root[i - 1].Op == OpCode.Loop || root[i - 1].Op == OpCode.AssignZero))
+                {
+                    root.RemoveAt(i);
+                    RetVal = true;
+                    i--;
+                }
+            }
+
+            if (trueRoot)
+            {
+                if (root.Count > 0 && root[0].Op == OpCode.Loop)
+                {
+                    root.RemoveAt(0);
+                    return true;
+                }
+
+                if (root.Count == 0 && root.Op == OpCode.Loop)
+                {
+                    root.Op = OpCode.Nop;
+                    return true;
+                }
+            }
+
+            return RetVal;
         }
 
         /// <summary>
@@ -158,7 +166,7 @@ namespace BrainFckCompilerCSharp
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
         }
 
         /// <summary>
@@ -177,14 +185,9 @@ namespace BrainFckCompilerCSharp
             do
             {
                 CodeLength = IL.Count;
-                if (settings.EliminateRedundentCode)
+                if (settings.CombineMatchingInstructions)
                 {
-                    EliminateRedundency(IL);
-                }
-
-                if (settings.SimplifyAssignZeroLoops)
-                {
-                    SimplifyAssignZeroLoops(IL);
+                    CombineMatchingInstructions(IL);
                 }
 
                 if (settings.EliminateEmptyLoops)
@@ -224,13 +227,49 @@ namespace BrainFckCompilerCSharp
                 if (settings.SimplifyAssignZeroLoops)
                 {
                     Continue |= SimplifyAssignZeroLoops(ast);
+                    ast.ColapseNops();
                 }
 
                 if (settings.EliminateDeadStores)
                 {
-                    Continue |= EliminateDeadStores(ast);
+                    Continue |= EliminateDeadStores(ast, true);
+                    ast.ColapseNops();
+                }
+
+                if (settings.EliminateUnreachableLoops)
+                {
+                    Continue |= EliminateUnreachableLoops(ast, true);
+                    ast.ColapseNops();
+                }
+
+                if (settings.EliminateConflictingInstructions) // TODO: replace with a setting.
+                {
+                    Continue |= EliminateConflictingInstructions(ast);
                 }
             }
+        }
+
+        internal static bool EliminateConflictingInstructions(AbstractSyntaxTree ast)
+        {
+            bool RetVal = false;
+            if (ast.Count > 0)
+            {
+                RetVal |= EliminateConflictingInstructions(ast[0]);
+            }
+
+            for (int i = 1; i < ast.Count; i++)
+            {
+                RetVal |= EliminateConflictingInstructions(ast[i]);
+                if (ast[i - 1].Op.IsReversable() && ast[i - 1].Op.GetReversedOpCode() == ast[i].Op)
+                {
+                    ast.RemoveAt(i);
+                    ast.RemoveAt(i - 1);
+                    i += 2;
+                    RetVal = true;
+                }
+            }
+
+            return RetVal;
         }
 
         /// <summary>
@@ -263,23 +302,29 @@ namespace BrainFckCompilerCSharp
                 }
             }
 
-            IL.RemoveNoOps();
+            IL.RemoveNops();
         }
 
-        private static bool EliminateDeadStores(AbstractSyntaxTree root)
+        private static bool EliminateDeadStores(AbstractSyntaxTree root, bool trueRoot)
         {
             bool RetVal = false;
-            for (int i = root.childNodes.Count - 2; i >= 0; i--)
+            for (int i = root.Count - 2; i >= 0; i--)
             {
-                RetVal |= EliminateDeadStores(root[i]);
+                RetVal |= EliminateDeadStores(root[i], false);
                 if (root[i + 1].Op == OpCode.AssignZero || root[i + 1].Op == OpCode.AssignVal)
                 {
                     AbstractSyntaxTree ast = root[i];
-                    if (ast.Op.AssignsValue() || ast.Op.ModifiesValue())
+                    if (ast.Op.AssignsValue() || ast.Op == OpCode.AssignZero || ast.Op.ModifiesValue())
                     {
                         root.Remove(ast);
                     }
                 }
+            }
+
+            if (root.Count > 0 && root[0].Op == OpCode.AssignZero && trueRoot)
+            {
+                root.RemoveAt(0);
+                return true;
             }
 
             return RetVal;
@@ -300,17 +345,20 @@ namespace BrainFckCompilerCSharp
         {
             bool RetVal = false;
 
+            bool Predicate(AbstractSyntaxTree ast) =>
+                (ast.AllChildrenAssignZero || ast.AllChildrenDecVal || ast.AllChildrenIncVal) && ast.Count % 2 != 0;
+
             // ToList hack allows the original list to be changed.
-            foreach (AbstractSyntaxTree ast in root.childNodes)
+            foreach (AbstractSyntaxTree ast in root.ChildNodes)
             {
                 RetVal |= SimplifyAssignZeroLoops(ast);
 
-                if (ast.Op == OpCode.Loop && ast.Count == 1)
+                if (ast.Op == OpCode.Loop && Predicate(ast))
                 {
                     OpCode op = ast[0].Op;
                     if (op == OpCode.AssignZero || op.ModifiesValue())
                     {
-                        ast.childNodes.RemoveAt(0);
+                        ast.ChildNodes.RemoveAt(0);
                         ast.Op = OpCode.AssignZero;
                         RetVal = true;
                     }

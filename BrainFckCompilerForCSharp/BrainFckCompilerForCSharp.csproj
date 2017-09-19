@@ -61,12 +61,11 @@
     <Compile Include="Compiler\AbstractSyntaxTree.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\ErrorCodes.cs" />
+    <Compile Include="Compiler\OpCode.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HelperFuncs.cs" />
     <Compile Include="Compiler\Instruction.cs" />
-    <Compile Include="Compiler\OpCodes.cs" />
     <Compile Include="Compiler\Optimizer.cs" />
-    <Compile Include="Compiler\ProgramValidator.cs" />
     <Compile Include="Compiler\Lexer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Compiler\CompilerSettings.cs" />

@@ -44,7 +44,7 @@ namespace BrainFckCompilerForCSharpCommandLine
 
                 case "-o":
                     settings.EliminateDeadStores = true;
-                    settings.EliminateRedundentCode = true;
+                    settings.CombineMatchingInstructions = true;
                     settings.EliminateUnreachableLoops = true;
                     settings.MergeAssignThenModifyInstructions = true;
                     settings.SimplifyAssignZeroLoops = true;
@@ -55,7 +55,7 @@ namespace BrainFckCompilerForCSharpCommandLine
                     break;
 
                 case "-rc":
-                    settings.EliminateRedundentCode = true;
+                    settings.CombineMatchingInstructions = true;
                     break;
 
                 case "-ul":
