@@ -12,6 +12,11 @@ namespace BrainFckCompilerCSharp
     public static class Compiler
     {
         /// <summary>
+        /// A string representing the directory the application was started in.
+        /// </summary>
+        private static readonly string appdir = AppDomain.CurrentDomain.BaseDirectory;
+
+        /// <summary>
         /// Attempts to compile the code specified in <paramref name="settings"/> outputs code in output.exe
         /// </summary>
         /// <param name="settings"></param>
@@ -28,25 +33,17 @@ namespace BrainFckCompilerCSharp
                 throw new ArgumentException(nameof(settings.InputCode));
             }
 
-            List<Instruction> IL = Lexer.Lex(settings.InputCode);
-            ErrorCodes ValidationState = ProgramValidator.Validate(IL);
-            if (ValidationState != ErrorCodes.Successful)
+            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileIl(settings);
+            if (preCompResults.errorCode != ErrorCodes.Successful)
             {
-                return ValidationState; // Invalid programs can't compile.
-            }
-
-            Optimizer.Optimize(IL, settings);
-            ValidationState = ProgramValidator.Validate(IL);
-            if (ValidationState != ErrorCodes.Successful)
-            {
-                return ValidationState; // Optimizations broke the code.
+                return preCompResults.errorCode;
             }
 
             // Why is this using a constant string? because a better way to do this hasn't been
             // found. The reason why this isn't a $ string is because of the brackets.
             string compiled =
                 "using System;public class Program{public static void Main(){byte[] ram=new byte[256];" +
-                GetInjectString(IL) +
+                GetInjectString(preCompResults.Il) +
                 "Console.ReadKey();}}";
 
             using (CSharpCodeProvider provider = new CSharpCodeProvider())
@@ -71,14 +68,38 @@ namespace BrainFckCompilerCSharp
             }
 
             // create a string which contains all the IL on new lines & pass the other args.
-            WriteToFiles(string.Join(Environment.NewLine, IL), compiled, settings);
+            WriteToFiles(string.Join(Environment.NewLine, preCompResults.Il), compiled, settings);
+            List<Instruction> tmp = CompileAst(settings).Ast.ToIl();
+            tmp.RemoveNoOps();
+            Console.WriteLine(string.Join(Environment.NewLine, tmp));
             return ErrorCodes.Successful; // Made it.
         }
 
-        /// <summary>
-        /// A string representing the directory the application was started in.
-        /// </summary>
-        private static readonly string appdir = AppDomain.CurrentDomain.BaseDirectory;
+        private static (ErrorCodes errorCode, AbstractSyntaxTree Ast) CompileAst(CompilerSettings settings)
+        {
+            AbstractSyntaxTree tree = Lexer.LexAst(settings.InputCode);
+            Optimizer.Optimize(tree, settings);
+            return (ErrorCodes.Successful, tree);
+        }
+
+        private static (ErrorCodes errorCode, List<Instruction> Il) CompileIl(CompilerSettings settings)
+        {
+            List<Instruction> IL = Lexer.Lex(settings.InputCode);
+            ErrorCodes ValidationState = ProgramValidator.Validate(IL);
+            if (ValidationState != ErrorCodes.Successful)
+            {
+                return (ValidationState, null); // Invalid programs can't compile.
+            }
+
+            Optimizer.Optimize(IL, settings);
+            ValidationState = ProgramValidator.Validate(IL);
+            if (ValidationState != ErrorCodes.Successful)
+            {
+                return (ValidationState, null); // Optimizations broke the code.
+            }
+
+            return (ErrorCodes.Successful, IL);
+        }
 
         /// <summary>
         /// Creates a string that is <paramref name="IL"/> as CSharp code.

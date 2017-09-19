@@ -56,6 +56,10 @@ namespace BrainFckCompilerCSharp
         /// <summary>
         /// Assigns the value at the current pointer to <see cref="Instruction.Value"/>.
         /// </summary>
-        AssignVal
+        AssignVal,
+
+        Loop,
+
+        AssignZero,
     }
 }

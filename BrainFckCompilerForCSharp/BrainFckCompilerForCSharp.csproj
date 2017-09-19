@@ -58,6 +58,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compiler\AbstractSyntaxTree.cs" />
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\ErrorCodes.cs" />
     <Compile Include="GlobalSuppressions.cs" />

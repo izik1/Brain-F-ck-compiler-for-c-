@@ -9,60 +9,6 @@ namespace BrainFckCompilerCSharp
     internal static class Optimizer
     {
         /// <summary>
-        /// Uses <paramref name="settings"/> to optimize <paramref name="IL"/>.
-        /// </summary>
-        /// <param name="IL">The IL that is to be optimized.</param>
-        /// <param name="settings">
-        /// The compiler settings that tell which optimizations should be used.
-        /// </param>
-        internal static void Optimize(List<Instruction> IL, CompilerSettings settings)
-        {
-            int CodeLength = 0;
-
-            // It feels evil to use a do while loop but this seems to be the best way to not loop
-            // more than required.
-            do
-            {
-                CodeLength = IL.Count;
-                if (settings.EliminateRedundentCode)
-                {
-                    EliminateRedundency(IL);
-                }
-
-                if (settings.SimplifyAssignZeroLoops)
-                {
-                    SimplifyAssignZeroLoops(IL);
-                }
-
-                if (settings.EliminateEmptyLoops)
-                {
-                    EliminateEmptyLoops(IL);
-                }
-
-                if (settings.EliminateUnreachableLoops)
-                {
-                    EliminateUnreachableLoops(IL);
-                }
-            } while (IL.Count < CodeLength);
-
-            // This one gets it's own loop because it doesn't help the other ones, less time spent here.
-            if (settings.EliminateDeadStores)
-            {
-                do
-                {
-                    CodeLength = IL.Count;
-                    EliminateDeadStores(IL);
-                } while (IL.Count < CodeLength);
-            }
-
-            // Doesn't need a loop.
-            if (settings.MergeAssignThenModifyInstructions)
-            {
-                MergeAssignThenModifyInstructions(IL);
-            }
-        }
-
-        /// <summary>
         /// Eliminate changes to values that get overridden.
         /// </summary>
         /// <param name="IL">The IL code to be optimized.</param>
@@ -184,17 +130,6 @@ namespace BrainFckCompilerCSharp
         }
 
         /// <summary>
-        /// Checks if <paramref name="current"/> gets overridden by <paramref name="next"/>.
-        /// </summary>
-        /// <param name="current">The OpCode of the current instruction.</param>
-        /// <param name="next">The OpCode of the next instruction.</param>
-        /// <returns>
-        /// True if <paramref name="current"/> gets overridden by <paramref name="next"/>, false otherwise.
-        /// </returns>
-        private static bool IsDeadStore(OpCode current, OpCode next) =>
-            next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
-
-        /// <summary>
         /// Merges all <see cref="Instruction"/> that have <see cref="OpCode.AssignVal"/> with ones
         /// that add or subtract to the value.
         /// </summary>
@@ -224,6 +159,78 @@ namespace BrainFckCompilerCSharp
             }
 
             IL.RemoveNoOps();
+        }
+
+        /// <summary>
+        /// Uses <paramref name="settings"/> to optimize <paramref name="IL"/>.
+        /// </summary>
+        /// <param name="IL">The IL that is to be optimized.</param>
+        /// <param name="settings">
+        /// The compiler settings that tell which optimizations should be used.
+        /// </param>
+        internal static void Optimize(List<Instruction> IL, CompilerSettings settings)
+        {
+            int CodeLength = 0;
+
+            // It feels evil to use a do while loop but this seems to be the best way to not loop
+            // more than required.
+            do
+            {
+                CodeLength = IL.Count;
+                if (settings.EliminateRedundentCode)
+                {
+                    EliminateRedundency(IL);
+                }
+
+                if (settings.SimplifyAssignZeroLoops)
+                {
+                    SimplifyAssignZeroLoops(IL);
+                }
+
+                if (settings.EliminateEmptyLoops)
+                {
+                    EliminateEmptyLoops(IL);
+                }
+
+                if (settings.EliminateUnreachableLoops)
+                {
+                    EliminateUnreachableLoops(IL);
+                }
+            } while (IL.Count < CodeLength);
+
+            // This one gets it's own loop because it doesn't help the other ones, less time spent here.
+            if (settings.EliminateDeadStores)
+            {
+                do
+                {
+                    CodeLength = IL.Count;
+                    EliminateDeadStores(IL);
+                } while (IL.Count < CodeLength);
+            }
+
+            // Doesn't need a loop.
+            if (settings.MergeAssignThenModifyInstructions)
+            {
+                MergeAssignThenModifyInstructions(IL);
+            }
+        }
+
+        internal static void Optimize(AbstractSyntaxTree ast, CompilerSettings settings)
+        {
+            bool Continue = true;
+            while (Continue)
+            {
+                Continue = false;
+                if (settings.SimplifyAssignZeroLoops)
+                {
+                    Continue |= SimplifyAssignZeroLoops(ast);
+                }
+
+                if (settings.EliminateDeadStores)
+                {
+                    Continue |= EliminateDeadStores(ast);
+                }
+            }
         }
 
         /// <summary>
@@ -257,6 +264,60 @@ namespace BrainFckCompilerCSharp
             }
 
             IL.RemoveNoOps();
+        }
+
+        private static bool EliminateDeadStores(AbstractSyntaxTree root)
+        {
+            bool RetVal = false;
+            for (int i = root.childNodes.Count - 2; i >= 0; i--)
+            {
+                RetVal |= EliminateDeadStores(root[i]);
+                if (root[i + 1].Op == OpCode.AssignZero || root[i + 1].Op == OpCode.AssignVal)
+                {
+                    AbstractSyntaxTree ast = root[i];
+                    if (ast.Op.AssignsValue() || ast.Op.ModifiesValue())
+                    {
+                        root.Remove(ast);
+                    }
+                }
+            }
+
+            return RetVal;
+        }
+
+        /// <summary>
+        /// Checks if <paramref name="current"/> gets overridden by <paramref name="next"/>.
+        /// </summary>
+        /// <param name="current">The OpCode of the current instruction.</param>
+        /// <param name="next">The OpCode of the next instruction.</param>
+        /// <returns>
+        /// True if <paramref name="current"/> gets overridden by <paramref name="next"/>, false otherwise.
+        /// </returns>
+        private static bool IsDeadStore(OpCode current, OpCode next) =>
+            next.AssignsValue() && (current.ModifiesValue() || current.AssignsValue());
+
+        private static bool SimplifyAssignZeroLoops(AbstractSyntaxTree root)
+        {
+            bool RetVal = false;
+
+            // ToList hack allows the original list to be changed.
+            foreach (AbstractSyntaxTree ast in root.childNodes)
+            {
+                RetVal |= SimplifyAssignZeroLoops(ast);
+
+                if (ast.Op == OpCode.Loop && ast.Count == 1)
+                {
+                    OpCode op = ast[0].Op;
+                    if (op == OpCode.AssignZero || op.ModifiesValue())
+                    {
+                        ast.childNodes.RemoveAt(0);
+                        ast.Op = OpCode.AssignZero;
+                        RetVal = true;
+                    }
+                }
+            }
+
+            return RetVal;
         }
     }
 }

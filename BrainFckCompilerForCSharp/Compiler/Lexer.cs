@@ -1,8 +1,8 @@
 ﻿// Copyright 2017 Zachery Gyurkovitz See LICENCE.md for the full licence.
 
-using System.Collections.Generic;
-using System.Text;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace BrainFckCompilerCSharp
 {
@@ -54,24 +54,105 @@ namespace BrainFckCompilerCSharp
             return IL;
         }
 
+        public static AbstractSyntaxTree LexAst(string code)
+        {
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+
+            if (code.Length == 0)
+            {
+                throw new ArgumentException("code must have a non-zero length", nameof(code));
+            }
+
+            int index = 0;
+            return GenerateTree(ref index, FilterComments(code), true, OpCode.StartLoop);
+        }
+
         /// <summary>
         /// Removes all characters from <paramref name="inputCode"/> except the following:
         /// +-[],.&lt;&gt;
         /// </summary>
         /// <param name="inputCode">The string to filter.</param>
         /// <returns><paramref name="inputCode"/> without comments.</returns>
-        private static string FilterComments(string inputCode)
+        private static string FilterComments(string inputCode) =>
+            Regex.Replace(inputCode, @"[^\[+<,.>\-\]]", "", RegexOptions.Compiled);
+
+        private static AbstractSyntaxTree GenerateTree(ref int index, string code, bool isRoot, OpCode bundleType)
         {
-            StringBuilder sb = new StringBuilder(inputCode.Length);
-            foreach (char c in inputCode)
+            AbstractSyntaxTree tree = new AbstractSyntaxTree(OpCode.Loop);
+            while (index < code.Length)
             {
-                if ("[+<,.>-]".IndexOf(c) >= 0)
+                switch (code[index++])
                 {
-                    sb.Append(c);
+                    case '[':
+                        tree.Add(GenerateTree(ref index, code, false, OpCode.StartLoop));
+                        break;
+
+                    case ']':
+                        if (isRoot)
+                        {
+                            throw new InvalidOperationException(); // Unbalanced ']'
+                        }
+
+                        if (bundleType != OpCode.StartLoop)
+                        {
+                            index--;
+                        }
+
+                        return tree;
+
+                    case '+':
+
+                        //if (bundleType != OpCode.AddVal)
+                        //{
+                        //    index--;
+                        //    if (bundleType == OpCode.StartLoop)
+                        //    {
+                        //        tree.Add(GenerateTree(ref index, code, false, OpCode.AddVal));
+                        //    }
+                        //    else
+                        //    {
+                        //        return tree;
+                        //    }
+                        //}
+                        tree.Add(new AbstractSyntaxTree(OpCode.AddVal));
+                        break;
+
+                    case '-':
+                        tree.Add(new AbstractSyntaxTree(OpCode.SubVal));
+                        break;
+
+                    case '>':
+                        tree.Add(new AbstractSyntaxTree(OpCode.AddPtr));
+                        break;
+
+                    case '<':
+                        tree.Add(new AbstractSyntaxTree(OpCode.SubPtr));
+                        break;
+
+                    case '.':
+                        tree.Add(new AbstractSyntaxTree(OpCode.SetOutput));
+                        break;
+
+                    case ',':
+                        tree.Add(new AbstractSyntaxTree(OpCode.GetInput));
+                        break;
+
+                    default:
+                        throw new InvalidOperationException();
                 }
             }
 
-            return sb.ToString();
+            if (!isRoot)
+            {
+                throw new InvalidOperationException(); // Unbalanced '['
+            }
+
+            tree.Op = OpCode.NoOp;
+
+            return tree;
         }
     }
 }
