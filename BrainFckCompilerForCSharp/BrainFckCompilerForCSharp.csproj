@@ -37,7 +37,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>Brainfook interpreter.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>BrainFckCompilerForCSharp.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -47,7 +48,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>Brainfook interpreter.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>BrainFckCompilerForCSharp.ruleset</CodeAnalysisRuleSet>
     <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
   </PropertyGroup>
   <PropertyGroup>
@@ -62,7 +63,6 @@
     <Compile Include="Compiler\Compiler.cs" />
     <Compile Include="Compiler\ErrorCodes.cs" />
     <Compile Include="Compiler\OpCode.cs" />
-    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="HelperFuncs.cs" />
     <Compile Include="Compiler\Instruction.cs" />
     <Compile Include="Compiler\Optimizer.cs" />
@@ -72,7 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Brainfook interpreter.ruleset" />
+    <None Include="BrainFckCompilerForCSharp.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">

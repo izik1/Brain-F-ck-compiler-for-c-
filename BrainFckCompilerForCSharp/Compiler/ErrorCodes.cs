@@ -7,6 +7,7 @@
         ProgramContainsUnbalancedLoop = 2,
         ProgramContainsInvalidLoop = 3,
         UnknownCompilationFailure = 4,
-        OutputFileInUse = 5
+        OutputFileInUse = 5,
+        UnexpectedIlInstruction = 6,
     }
 }

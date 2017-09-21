@@ -6,6 +6,7 @@ using System.Text;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.IO;
+using System.Linq;
 
 namespace BrainFckCompilerCSharp
 {
@@ -16,6 +17,18 @@ namespace BrainFckCompilerCSharp
         /// </summary>
         private static readonly string appdir = AppDomain.CurrentDomain.BaseDirectory;
 
+        //CE ED 66 66 CC 0D 00 0B 03 73 00 83 00 0C 00 0D
+        //00 08 11 1F 88 89 00 0E DC CC 6E E6 DD DD D9 99
+        //BB BB 67 63 6E 0E EC CC DD DC 99 9F BB B9 33 3E
+        private static readonly byte[] DmgHeader =
+        {
+            0x00,0xC3,0x50,0x01,0xCE,0xED,0x66,0x66,0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,
+            0x00,0x0C,0x00,0x0D,0x00,0x08,0x11,0x1F,0x88,0x89,0x00,0x0E,0xDC,0xCC,0x6E,0xE6,
+            0xDD,0xDD,0xD9,0x99,0xBB,0xBB,0x67,0x63,0x6E,0x0E,0xEC,0xCC,0xDD,0xDC,0x99,0x9F,
+            0xBB,0xB9,0x33,0x3E,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+            0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0B,0x00,0x00,
+        };
+
         /// <summary>
         /// Attempts to compile the code specified in <paramref name="settings"/> outputs code in output.exe
         /// </summary>
@@ -23,17 +36,7 @@ namespace BrainFckCompilerCSharp
         /// <returns>The success of the compilation.</returns>
         public static ErrorCodes Compile(CompilerSettings settings)
         {
-            if (settings == null)
-            {
-                throw new ArgumentNullException(nameof(settings));
-            }
-
-            if (settings.InputCode == null)
-            {
-                throw new ArgumentException(nameof(settings.InputCode));
-            }
-
-            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileAst(settings);
+            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileCommon(settings);
             if (preCompResults.errorCode != ErrorCodes.Successful)
             {
                 return preCompResults.errorCode;
@@ -69,9 +72,6 @@ namespace BrainFckCompilerCSharp
 
             // create a string which contains all the IL on new lines & pass the other args.
             WriteToFiles(string.Join(Environment.NewLine, preCompResults.Il), compiled, settings);
-            List<Instruction> tmp = CompileAst(settings).Il;
-            tmp.RemoveNops();
-            Console.WriteLine(string.Join(Environment.NewLine, tmp));
             return ErrorCodes.Successful; // Made it.
         }
 
@@ -87,6 +87,116 @@ namespace BrainFckCompilerCSharp
             List<Instruction> Il = tree.ToIl();
             Optimizer.Optimize(Il, settings);
             return (ErrorCodes.Successful, Il);
+        }
+
+        public static ErrorCodes CompileDmg(CompilerSettings settings)
+        {
+            (ErrorCodes errorCode, List<Instruction> Il) preCompResults = CompileCommon(settings);
+            if (preCompResults.errorCode != ErrorCodes.Successful)
+            {
+                return preCompResults.errorCode;
+            }
+
+            Stack<int> jumpOffsets = new Stack<int>();
+            List<byte> rom = new byte[0x100].Concat(DmgHeader).ToList();
+            rom.Add(0xAF); // xor A
+            rom.Add(0x6F); // ld L,A (set L to 0)
+
+            // ld H,C0
+            rom.Add(0x26);
+            rom.Add(0xC0);
+
+            foreach (Instruction instr in preCompResults.Il)
+            {
+                int instrOffset = rom.Count;
+                switch (instr.OpCode)
+                {
+                    case OpCode.Nop:
+                        rom.Add(0x00); // Maybe emit a compiler warning here?
+                        break;
+
+                    case OpCode.AddVal:
+                    case OpCode.SubVal:
+                        rom.Add(instr.OpCode == OpCode.AddVal ? (byte)0xC6 : (byte)0xD6);
+                        rom.Add(instr.Value);
+                        break;
+
+                    case OpCode.AddPtr:
+                    case OpCode.SubPtr:
+                        rom.Add(0x77); // Store A into the pointer.
+
+                        // Load a with the address
+                        rom.Add(0x3E);
+                        rom.Add(instr.Value);
+
+                        rom.Add(instr.OpCode == OpCode.AddPtr ? (byte)0x85 : (byte)0x95); // Modify the address.
+                        rom.Add(0x6F); // Store the result into L
+                        rom.Add(0x7E); // Read at the new pointer.
+                        break;
+
+                    case OpCode.StartLoop:
+                        rom.Add(0xCA);
+                        rom.Add(0);
+                        rom.Add(0);
+                        jumpOffsets.Push(instrOffset);
+                        break;
+
+                    case OpCode.EndLoop:
+                        int baseAddr = jumpOffsets.Pop();
+
+                        // Setup jump to the instruction after this.
+                        rom[baseAddr + 1] = (byte)(instrOffset + 3);
+                        rom[baseAddr + 2] = (byte)((instrOffset + 3) >> 8);
+
+                        // Setup this jump.
+                        rom.Add(0xC2);
+                        rom.Add((byte)(baseAddr + 3));
+                        rom.Add((byte)((baseAddr + 3) >> 8));
+                        break;
+
+                    case OpCode.AssignVal:
+                        rom.Add(0x3E);
+                        rom.Add(instr.Value);
+                        break;
+
+                    case OpCode.AssignZero:
+                        rom.Add(0xAF);
+                        break;
+
+                    case OpCode.GetInput: // TODO: load from serial.
+                    case OpCode.SetOutput: // TODO: write to serial.
+                    default:
+                        return ErrorCodes.UnexpectedIlInstruction;
+                }
+            }
+
+            rom.Add(0x10);
+            rom.Add(0x00);
+
+            File.WriteAllBytes(((!string.IsNullOrEmpty(settings.FileNameOutputExe))
+                        ? settings.FileNameOutputExe : "output") + ".gb", rom.ToArray());
+            if (!string.IsNullOrEmpty(settings.FileNameIL))
+            {
+                File.WriteAllText(Path.Combine(appdir, settings.FileNameIL + ".txt"),
+                    string.Join(Environment.NewLine, preCompResults.Il));
+            }
+
+            return ErrorCodes.Successful;
+        }
+
+        private static (ErrorCodes errorCode, List<Instruction> Il) CompileCommon(CompilerSettings settings)
+        {
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (settings.InputCode == null)
+            {
+                throw new ArgumentException(nameof(settings.InputCode));
+            }
+
+            return CompileAst(settings);
         }
 
         /// <summary>
