@@ -70,37 +70,20 @@ namespace BrainFckCompilerCSharp
 
             switch (this.OpCode)
             {
-                case OpCode.Nop:
-                    return "";
-
-                case OpCode.AddVal:
-                    return "ram[ptr]+=" + this.Value.ToString() + ";";
-
-                case OpCode.SubVal:
-                    return "ram[ptr]-=" + this.Value.ToString() + ";";
-
-                case OpCode.AddPtr:
-                    return "ptr+=" + this.Value.ToString() + ";";
-
-                case OpCode.SubPtr:
-                    return "ptr-=" + this.Value.ToString() + ";";
-
-                case OpCode.GetInput:
-                    return "ram[ptr]=byte.Parse(Console.ReadLine());";
-
-                case OpCode.SetOutput:
-                    return "Console.WriteLine(ram[ptr] + \" \" + (char)ram[ptr]);";
-
-                case OpCode.StartLoop:
-                    return "while(ram[ptr]>0){";
-
-                case OpCode.EndLoop:
-                    return "}";
-
-                case OpCode.AssignVal:
-                    return "ram[ptr]=" + this.Value.ToString() + ";";
-                default:
-                    throw new InvalidOperationException("Unexpected OpCode" + this.OpCode.ToString());
+                case OpCode.Nop: return "";
+                case OpCode.AddVal: return "ram[ptr]+=" + this.Value.ToString() + ";";
+                case OpCode.SubVal: return "ram[ptr]-=" + this.Value.ToString() + ";";
+                case OpCode.AddPtr: return "ptr+=" + this.Value.ToString() + ";";
+                case OpCode.SubPtr: return "ptr-=" + this.Value.ToString() + ";";
+                case OpCode.GetInput: return "ram[ptr]=byte.Parse(Console.ReadLine());";
+                case OpCode.SetOutput: return "Console.WriteLine(ram[ptr] + \" \" + (char)ram[ptr]);";
+                case OpCode.StartLoop: return "while(ram[ptr]>0){";
+                case OpCode.EndLoop: return "}";
+                case OpCode.ScanLeft: return "while(ram[ptr--]>0){}";
+                case OpCode.ScanRight: return "while(ram[ptr++]>0){}";
+                case OpCode.AssignVal: return "ram[ptr]=" + this.Value.ToString() + ";";
+                case OpCode.AssignZero: return "ram[ptr]=0;";
+                default: throw new InvalidOperationException("Unexpected OpCode" + this.OpCode.ToString());
             }
         }
     }

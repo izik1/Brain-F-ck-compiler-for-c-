@@ -68,5 +68,9 @@ namespace BrainFckCompilerCSharp
         /// value can *only* be zero.
         /// </summary>
         AssignZero,
+
+        ScanLeft,
+
+        ScanRight,
     }
 }

@@ -16,6 +16,8 @@ namespace BrainFckCompilerCSharp
         /// <returns><c>true</c> if <paramref name="code"/> Assigns a value <c>false otherwise</c></returns>
         public static bool AssignsValue(this OpCode code) => code == OpCode.GetInput || code == OpCode.AssignVal;
 
+        public static bool Scans(this OpCode op) => op == OpCode.ScanLeft || op == OpCode.ScanRight;
+
         /// <summary>
         /// Gets the reverse <see cref="OpCode"/> of <paramref name="code"/>
         /// </summary>

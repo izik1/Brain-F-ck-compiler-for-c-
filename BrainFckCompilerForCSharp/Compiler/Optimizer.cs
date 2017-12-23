@@ -45,6 +45,38 @@ namespace BrainFckCompilerCSharp
             IL.RemoveNops();
         }
 
+        private static bool SimplifyScans(AbstractSyntaxTree root)
+        {
+            if (root.Count > 1)
+            {
+                bool RetVal = false;
+                foreach (AbstractSyntaxTree ast in root.ChildNodes)
+                {
+                    RetVal |= SimplifyScans(ast);
+                }
+
+                return RetVal;
+            }
+
+            if (root.Count == 1)
+            {
+                if (root[0].Op == OpCode.AddPtr)
+                {
+                    root.RemoveAt(0);
+                    root.Op = OpCode.ScanRight;
+                    return true;
+                }
+                if (root[0].Op == OpCode.SubPtr)
+                {
+                    root.RemoveAt(0);
+                    root.Op = OpCode.ScanLeft;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Eliminates redundent instructions, for instance add 1 then subtract 5 gets replaced with
         /// subtract 4
@@ -60,45 +92,6 @@ namespace BrainFckCompilerCSharp
                     // removed faster when List.Remove is called.
                     IL[i].Value += IL[i + 1].Value;
                     IL[i + 1].Invalidate();
-                }
-            }
-
-            IL.RemoveNops();
-        }
-
-        /// <summary>
-        /// Removes all loops that are unreachable (meaning that no matter what they can't run)
-        /// </summary>
-        /// <param name="IL">The IL code to be optimized.</param>
-        internal static void EliminateUnreachableLoops(List<Instruction> IL)
-        {
-            Stack<int> LoopEnds = new Stack<int>();
-
-            // Not sure if this local function should exist.
-            bool DetectUnreachableLoops(int current)
-            {
-                return IL[current + 1].OpCode == OpCode.StartLoop &&
-                    ((IL[current].OpCode == OpCode.AssignVal && IL[current].Value == 0) || current == 0);
-            }
-            for (int i = IL.Count - 1; i >= 0; i--)
-            {
-                if (IL[i].OpCode == OpCode.EndLoop)
-                {
-                    LoopEnds.Push(i);
-                }
-
-                // If MostRecentLoopEnd is less than 1 no loop can made.
-                else if (LoopEnds.Count > 0 && DetectUnreachableLoops(i))
-                {
-                    int MostRecentLoopEnd = LoopEnds.Pop();
-                    for (int j = i; j < MostRecentLoopEnd + 1; j++)
-                    {
-                        IL[j].Invalidate();
-                    }
-                }
-                else
-                {
-                    // Do nothing.
                 }
             }
 
@@ -179,6 +172,7 @@ namespace BrainFckCompilerCSharp
         internal static void Optimize(List<Instruction> IL, CompilerSettings settings)
         {
             int CodeLength = 0;
+            IL.RemoveNops(); // Just in case.
 
             // It feels evil to use a do while loop but this seems to be the best way to not loop
             // more than required.
@@ -193,11 +187,6 @@ namespace BrainFckCompilerCSharp
                 if (settings.EliminateEmptyLoops)
                 {
                     EliminateEmptyLoops(IL);
-                }
-
-                if (settings.EliminateUnreachableLoops)
-                {
-                    EliminateUnreachableLoops(IL);
                 }
             } while (IL.Count < CodeLength);
 
@@ -242,9 +231,15 @@ namespace BrainFckCompilerCSharp
                     ast.ColapseNops();
                 }
 
-                if (settings.EliminateConflictingInstructions) // TODO: replace with a setting.
+                if (settings.EliminateConflictingInstructions)
                 {
                     Continue |= EliminateConflictingInstructions(ast);
+                    ast.ColapseNops();
+                }
+                if (true)
+                {
+                    Continue |= SimplifyScans(ast);
+                    ast.ColapseNops();
                 }
             }
         }
@@ -344,7 +339,6 @@ namespace BrainFckCompilerCSharp
         private static bool SimplifyAssignZeroLoops(AbstractSyntaxTree root)
         {
             bool RetVal = false;
-
             bool Predicate(AbstractSyntaxTree ast) =>
                 (ast.AllChildrenAssignZero || ast.AllChildrenDecVal || ast.AllChildrenIncVal) && ast.Count % 2 != 0;
 

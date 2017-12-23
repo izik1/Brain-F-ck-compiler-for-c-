@@ -84,7 +84,7 @@ namespace BrainFckCompilerCSharp
             }
             else
             {
-                il.Add(this.Op == OpCode.AssignZero ? new Instruction(OpCode.AssignVal, 0) : new Instruction(this.Op));
+                il.Add(new Instruction(this.Op));
                 if (this.Op == OpCode.Nop)
                 {
                     foreach (AbstractSyntaxTree item in this.ChildNodes)

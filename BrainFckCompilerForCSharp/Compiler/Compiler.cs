@@ -100,6 +100,7 @@ namespace BrainFckCompilerCSharp
             Stack<int> jumpOffsets = new Stack<int>();
             List<byte> rom = new byte[0x100].Concat(DmgHeader).ToList();
             rom.Add(0xAF); // xor A
+            rom.Add(0x47); // ld B,A (set B to 0)
             rom.Add(0x6F); // ld L,A (set L to 0)
 
             // ld H,C0
@@ -128,10 +129,10 @@ namespace BrainFckCompilerCSharp
                         // Load a with the address
                         rom.Add(0x3E);
                         rom.Add(instr.Value);
-
                         rom.Add(instr.OpCode == OpCode.AddPtr ? (byte)0x85 : (byte)0x95); // Modify the address.
                         rom.Add(0x6F); // Store the result into L
                         rom.Add(0x7E); // Read at the new pointer.
+                        rom.Add(0xBB);
                         break;
 
                     case OpCode.StartLoop:
@@ -161,6 +162,17 @@ namespace BrainFckCompilerCSharp
 
                     case OpCode.AssignZero:
                         rom.Add(0xAF);
+                        break;
+
+                    case OpCode.ScanLeft:
+                    case OpCode.ScanRight:
+                        rom.Add(0x28);
+                        rom.Add(0x05); // this is a fixed address based on the start address of this.
+                        rom.Add(0xAF);
+                        rom.Add(instr.OpCode == OpCode.ScanRight ? (byte)0x2C : (byte)0x2D); // INC/DEC L
+                        rom.Add(0xBE);
+                        rom.Add(0x20); // JR NZ
+                        rom.Add(0xFC); // addr: INC/DEC L.
                         break;
 
                     case OpCode.GetInput: // TODO: load from serial.
